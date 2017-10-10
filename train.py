@@ -46,8 +46,8 @@ def train(use_gpu=False):
             if not batch % every:
                 print("[e{}][b{}/{}] loss: {:7.4f}\r".format(epoch, batch, total_batches, loss.data[0]))
     end = time.time()
-    print("training done in {:.4f} seconds".format(end - start))  # It takes about 5 minutes with GPU, loss less than 8
-    idx2vec = word2vec.forward([idx for idx in range(V)])
+    print("training done in {:.4f} seconds".format(end - start))  # It takes about 4 minutes with GPU, loss less than 7.5
+    idx2vec = word2vec.forward([idx for idx in range(V + 1)])
     if use_gpu:
         idx2vec = idx2vec.cpu()
     pickle.dump(idx2vec.data.numpy(), open('./data/idx2vec.dat', 'wb'))
