@@ -24,7 +24,7 @@ class PermutedCorpus(Dataset):
 
 def train(use_gpu=False):
     num_epochs = 2
-    batch_size = 128
+    batch_size = 256
     every = 10
     vocab = pickle.load(open('./data/vocab.dat', 'rb'))
     V = len(vocab)
@@ -46,7 +46,7 @@ def train(use_gpu=False):
             if not batch % every:
                 print("[e{}][b{}/{}] loss: {:7.4f}\r".format(epoch, batch, total_batches, loss.data[0]))
     end = time.time()
-    print("training done in {:.4f} seconds".format(end - start))  # It takes about 4 minutes with GPU, loss less than 7.5
+    print("training done in {:.4f} seconds".format(end - start))  # It takes about 3.5 minutes with GPU, loss less than 7.5
     idx2vec = word2vec.forward([idx for idx in range(V + 1)])
     if use_gpu:
         idx2vec = idx2vec.cpu()

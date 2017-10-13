@@ -27,8 +27,8 @@ class Word2Vec(Bundler):
         self.V = V + 1
         self.d = d
         self.use_gpu = use_gpu
-        self.ivectors = nn.Embedding(self.V, self.d, padding_idx=padding_idx)
-        self.ovectors = nn.Embedding(self.V, self.d, padding_idx=padding_idx)
+        self.ivectors = nn.Embedding(self.V, self.d, padding_idx=padding_idx, sparse=True)
+        self.ovectors = nn.Embedding(self.V, self.d, padding_idx=padding_idx, sparse=True)
         if self.use_gpu:
             self.ivectors = self.ivectors.cuda()
             self.ovectors = self.ovectors.cuda()
