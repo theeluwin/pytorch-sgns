@@ -22,14 +22,14 @@ class Bundler(nn.Module):
 
 class Word2Vec(Bundler):
 
-    def __init__(self, V, d=50, padding_idx=0, use_gpu=False):
+    def __init__(self, V, d=50, padding_idx=0, gpu=False):
         super(Word2Vec, self).__init__()
         self.V = V + 1
         self.d = d
-        self.use_gpu = use_gpu
+        self.gpu = gpu
         self.ivectors = nn.Embedding(self.V, self.d, padding_idx=padding_idx, sparse=True)
         self.ovectors = nn.Embedding(self.V, self.d, padding_idx=padding_idx, sparse=True)
-        if self.use_gpu:
+        if self.gpu:
             self.ivectors = self.ivectors.cuda()
             self.ovectors = self.ovectors.cuda()
 
@@ -37,14 +37,14 @@ class Word2Vec(Bundler):
         return self.forward_i(data)
 
     def forward_i(self, data):
-        v = Variable(LongTensor(data))
-        if self.use_gpu:
+        v = Variable(LongTensor(data), requires_grad=False)
+        if self.gpu:
             v = v.cuda()
         return self.ivectors(v)
 
     def forward_o(self, data):
-        v = Variable(LongTensor(data))
-        if self.use_gpu:
+        v = Variable(LongTensor(data), requires_grad=False)
+        if self.gpu:
             v = v.cuda()
         return self.ovectors(v)
 
