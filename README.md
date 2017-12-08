@@ -1,18 +1,23 @@
 # PyTorch SGNS
 
-SkipGramNegativeSampling
+Word2Vec's **SkipGramNegativeSampling** in Python.
 
-Yet another but quite general [negative sampling loss](https://arxiv.org/abs/1310.4546) implemented in [PyTorch](http://www.pytorch.org). Corpus reference: [dl4j](https://deeplearning4j.org/word2vec).
+Yet another but quite general [negative sampling loss](https://arxiv.org/abs/1310.4546) implemented in [PyTorch](http://www.pytorch.org).
 
-It can be used with any embedding scheme! Pretty fast, I bet.
+It can be used with ANY embedding scheme! Pretty fast, I bet.
 
 ```python
-V = len(vocab)
-word2vec = Word2Vec(V=V)
-sgns = SGNS(V=V, embedding=word2vec, batch_size=128, window_size=4, n_negatives=5)
+vocab_size = 20000
+word2vec = Word2Vec(vocab_size=vocab_size, embedding_size=300)
+sgns = SGNS(embedding=word2vec, vocab_size=vocab_size, n_negs=20)
+optim = Adam(sgns.parameters())
 for batch, (iword, owords) in enumerate(dataloader):
     loss = sgns(iword, owords)
-    optimizer.zero_grad()
+    optim.zero_grad()
     loss.backward()
-    optimizer.step()
+    optim.step()
 ```
+
+New: support negative sampling based on word frequency distribution (0.75th power) and subsampling (resolving word frequence imbalance).
+
+To test this repo, run `python preprocess.py` and `python train.py` (use `-h` option for help).

@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 
-import random
-import torch
+try:
+    import cv2
+    import torch
+except:
+    pass
+
+import numpy as np
+import torch as t
 import torch.nn as nn
 
-from torch import LongTensor
-from torch.autograd import Variable
+from torch import LongTensor as LT
+from torch import FloatTensor as FT
+from torch.autograd import Variable as V
 
 
 class Bundler(nn.Module):
@@ -22,68 +29,54 @@ class Bundler(nn.Module):
 
 class Word2Vec(Bundler):
 
-    def __init__(self, V, d=50, padding_idx=0, gpu=False):
+    def __init__(self, vocab_size=20000, embedding_size=300, padding_idx=0):
         super(Word2Vec, self).__init__()
-        self.V = V + 1
-        self.d = d
-        self.gpu = gpu
-        self.ivectors = nn.Embedding(self.V, self.d, padding_idx=padding_idx, sparse=True)
-        self.ovectors = nn.Embedding(self.V, self.d, padding_idx=padding_idx, sparse=True)
-        if self.gpu:
-            self.ivectors = self.ivectors.cuda()
-            self.ovectors = self.ovectors.cuda()
+        self.vocab_size = vocab_size
+        self.embedding_size = embedding_size
+        self.ivectors = nn.Embedding(self.vocab_size, self.embedding_size, padding_idx=padding_idx)
+        self.ovectors = nn.Embedding(self.vocab_size, self.embedding_size, padding_idx=padding_idx)
+        self.ivectors.weight = nn.Parameter(t.cat([t.zeros(1, self.embedding_size), FT(self.vocab_size - 1, self.embedding_size).uniform_(-0.5 / self.embedding_size, 0.5 / self.embedding_size)]))
+        self.ovectors.weight = nn.Parameter(t.cat([t.zeros(1, self.embedding_size), FT(self.vocab_size - 1, self.embedding_size).uniform_(-0.5 / self.embedding_size, 0.5 / self.embedding_size)]))
+        self.ivectors.weight.requires_grad = True
+        self.ovectors.weight.requires_grad = True
 
     def forward(self, data):
         return self.forward_i(data)
 
     def forward_i(self, data):
-        v = Variable(LongTensor(data), requires_grad=False)
-        if self.gpu:
-            v = v.cuda()
+        v = V(LT(data), requires_grad=False)
+        v = v.cuda() if self.ivectors.weight.is_cuda else v
         return self.ivectors(v)
 
     def forward_o(self, data):
-        v = Variable(LongTensor(data), requires_grad=False)
-        if self.gpu:
-            v = v.cuda()
+        v = V(LT(data), requires_grad=False)
+        v = v.cuda() if self.ivectors.weight.is_cuda else v
         return self.ovectors(v)
 
 
 class SGNS(nn.Module):
 
-    def __init__(self, V, embedding, batch_size=128, window_size=4, n_negatives=5):
+    def __init__(self, embedding, vocab_size=20000, n_negs=20, weights=None):
         super(SGNS, self).__init__()
-        self.V = V + 1
         self.embedding = embedding
-        self.batch_size = batch_size
-        self.window_size = window_size
-        self.n_negatives = n_negatives
-
-    def sample(self, iword_b, owords_b):
-        nwords_b = []
-        for b in range(self.batch_size):
-            iword = iword_b[b]
-            owords = owords_b[b]
-            nwords = []
-            for oword in owords:
-                negs = []
-                while True:
-                    if len(negs) >= self.n_negatives:
-                        break
-                    idx = random.randrange(1, self.V)
-                    if (idx == iword) or (idx in owords) or (idx in negs):
-                        continue
-                    negs.append(idx)
-                nwords.append(negs)
-            nwords_b.append(nwords)
-        return nwords_b
+        self.vocab_size = vocab_size
+        self.n_negs = n_negs
+        self.weights = None
+        if weights is not None:
+            wf = np.power(weights, 0.75)
+            wf = wf / wf.sum()
+            self.weights = FT(wf)
 
     def forward(self, iword, owords):
-        # black magic from https://github.com/kefirski/pytorch_NEG_loss
-        nwords = self.sample(iword, owords)
-        ivectors = self.embedding.forward_i(LongTensor(iword).repeat(1, self.window_size).contiguous().view(-1))
-        ovectors = self.embedding.forward_o(LongTensor(owords).contiguous().view(-1))
-        nvectors = self.embedding.forward_o(LongTensor(nwords).contiguous().view(self.batch_size * self.window_size, -1)).neg()
-        oloss = (ivectors * ovectors).sum(1).squeeze().sigmoid().log()
-        nloss = torch.bmm(nvectors, ivectors.unsqueeze(2)).sigmoid().log().sum(1).squeeze()
-        return -(oloss + nloss).sum() / self.batch_size
+        batch_size = iword.size()[0]
+        context_size = owords.size()[1]
+        if self.weights is not None:
+            nwords = t.multinomial(self.weights, batch_size * context_size * self.n_negs, replacement=True).view(batch_size, -1)
+        else:
+            nwords = FT(batch_size, context_size * self.n_negs).uniform_(0, self.vocab_size - 1).long()
+        ivectors = self.embedding.forward_i(iword).unsqueeze(2)
+        ovectors = self.embedding.forward_o(owords)
+        nvectors = self.embedding.forward_o(nwords).neg()
+        oloss = t.bmm(ovectors, ivectors).squeeze().sigmoid().log().mean(1)
+        nloss = t.bmm(nvectors, ivectors).squeeze().sigmoid().log().view(-1, context_size, self.n_negs).sum(2).mean(1)
+        return -(oloss + nloss).mean()

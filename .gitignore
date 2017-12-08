@@ -103,4 +103,6 @@ ENV/
 # project-specific
 *.dat
 *.pt
+data/
+result/
 .DS_Store
