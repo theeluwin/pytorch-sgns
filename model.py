@@ -50,7 +50,7 @@ class Word2Vec(Bundler):
 
     def forward_o(self, data):
         v = V(LT(data), requires_grad=False)
-        v = v.cuda() if self.ivectors.weight.is_cuda else v
+        v = v.cuda() if self.ovectors.weight.is_cuda else v
         return self.ovectors(v)
 
 
