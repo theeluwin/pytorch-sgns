@@ -18,6 +18,6 @@ for batch, (iword, owords) in enumerate(dataloader):
     optim.step()
 ```
 
-New: support negative sampling based on word frequency distribution (0.75th power) and subsampling (resolving word frequence imbalance).
+New: support negative sampling based on word frequency distribution (0.75th power) and subsampling (resolving word frequency imbalance).
 
-To test this repo, run `python preprocess.py` and `python train.py` (use `-h` option for help).
+To test this repo, place a space-delimited corpus as `data/corpus.txt` then run `python preprocess.py` and `python train.py --weights --cuda` (use `-h` option for help).

@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
 
-try:
-    import cv2
-    import torch
-except:
-    pass
-
 import numpy as np
 import torch as t
 import torch.nn as nn
 
 from torch import LongTensor as LT
 from torch import FloatTensor as FT
-from torch.autograd import Variable as V
 
 
 class Bundler(nn.Module):
@@ -44,12 +37,12 @@ class Word2Vec(Bundler):
         return self.forward_i(data)
 
     def forward_i(self, data):
-        v = V(LT(data), requires_grad=False)
+        v = LT(data)
         v = v.cuda() if self.ivectors.weight.is_cuda else v
         return self.ivectors(v)
 
     def forward_o(self, data):
-        v = V(LT(data), requires_grad=False)
+        v = LT(data)
         v = v.cuda() if self.ovectors.weight.is_cuda else v
         return self.ovectors(v)
 
