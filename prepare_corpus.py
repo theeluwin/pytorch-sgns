@@ -1,10 +1,10 @@
 import pandas as pd
 
-from config import DATA_FPATH, CORPUS_FPATH, DATA_COLS
+from config import DATA_FPATH, CORPUS_FPATH, DATA_COLS, POS_THRESH
 
 
 def filter_positives(df):
-    return df[df['rating'] >= 3.5]
+    return df[df['rating'] >= POS_THRESH]
 
 
 def build_u_lsts(df):
