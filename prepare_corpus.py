@@ -20,7 +20,7 @@ def extract_corpus(u_lsts):
 
 
 if __name__ == '__main__':
-    data = pd.read_csv(DATA_FPATH, delimiter='\t', columns=DATA_COLS)
+    data = pd.read_csv(DATA_FPATH, delimiter='\t', names=DATA_COLS)
     data = filter_positives(data)
     u_lsts = build_u_lsts(data)
     extract_corpus(u_lsts)
