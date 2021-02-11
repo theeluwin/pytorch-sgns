@@ -61,7 +61,7 @@ def hr_k(model, k, users2items, eval_set):
     return hr_k
 
 
-def mrp_k(model, k, users2items, eval_set):
+def mrr_k(model, k, users2items, eval_set):
     in_top_k, rec_rank = 0, 0
     for u_id, i_id in eval_set[['user_id', 'item_id']].values:
         user2vec = represent_user(users2items[u_id - 1], model)
