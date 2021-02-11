@@ -1,26 +1,40 @@
 import pandas as pd
-
-from config import DATA_FPATH, CORPUS_FPATH, DATA_COLS, POS_THRESH
-
-
-def filter_positives(df):
-    return df[df['rating'] >= POS_THRESH]
+import random
+from config import DATA_FPATH, TRAIN_PATH, VALID_PATH, DATA_COLS, POS_THRESH
 
 
-def build_u_lsts(df):
-    return df.sort_values('timestamp').groupby('user_id').item_id.apply(list).tolist()
+def filter_group(group):
+    ret_group = group[group['rating'] >= POS_THRESH]
+    if ret_group.empty or ret_group.shape[0] < 2:
+        print(f'user {group.name} rate less than 2 items above 3.5')
+        return []
+    else:
+        return ret_group['item_id'].tolist()
 
 
-def extract_corpus(u_lsts):
-    with open(CORPUS_FPATH, 'a') as the_file:
-        for u in u_lsts:
-            u = [str(i) for i in u]
-            sent = ' '.join(u)
-            the_file.write(sent + '\n')
+def split_train_valid(lsts):
+    with open(VALID_PATH, 'a') as valid_file, open(TRAIN_PATH, 'a') as train_file:
+        valid_file.write('user_id, item_id\n')
+        u = 1
+        for u_lst in lsts:
+            if len(u_lst):
+                item = random.choice(u_lst)
+                valid_file.write(str(u) + ',' + str(item) + '\n')
+                u_lst.remove(item)
+                out = ' '.join([str(i) for i in u_lst])
+                train_file.write(out + '\n')
+            else:
+                train_file.write('' + '\n')
+            u += 1
 
 
 if __name__ == '__main__':
     data = pd.read_csv(DATA_FPATH, delimiter='\t', names=DATA_COLS)
-    data = filter_positives(data)
-    u_lsts = build_u_lsts(data)
-    extract_corpus(u_lsts)
+    users2items = data.groupby('user_id').apply(lambda group: filter_group(group))
+    split_train_valid(users2items)
+
+
+
+
+
+
