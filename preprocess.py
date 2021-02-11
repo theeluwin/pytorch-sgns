@@ -76,6 +76,7 @@ class Preprocess(object):
                 for i in range(len(sent)):
                     iword, owords = self.skipgram(sent, i)
                     data.append((self.word2idx[iword], [self.word2idx[oword] for oword in owords]))
+                    i += 1
         print("")
         pickle.dump(data, open(os.path.join(self.data_dir, 'train.dat'), 'wb'))
         print("conversion done")
