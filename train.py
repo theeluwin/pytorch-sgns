@@ -6,6 +6,7 @@ import random
 import argparse
 import torch as t
 import numpy as np
+import pandas as pd
 
 from tqdm import tqdm
 from torch.optim import Adam
@@ -13,6 +14,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from model import Word2Vec, SGNS
 
+from evaluation import users2items, hr_k, mrr_k
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -24,7 +26,9 @@ def parse_args():
     parser.add_argument('--epoch', type=int, default=100, help="number of epochs")
     parser.add_argument('--mb', type=int, default=4096, help="mini-batch size")
     parser.add_argument('--ss_t', type=float, default=1e-5, help="subsample threshold")
-    parser.add_argument('--valid_split', type=float, default=0.22, help="validation rate")
+    parser.add_argument('--k', type=int, default=10, help="number of top ranked items")
+    parser.add_argument('--conv_thresh', type=float, default=0.0001, help="threshold diff for convergence")
+    parser.add_argument('--hrk_weight', type=float, default=0.5, help="weight to put on hrk metric value")
     parser.add_argument('--conti', action='store_true', help="continue learning")
     parser.add_argument('--weights', action='store_true', help="use weights for negative sampling")
     parser.add_argument('--cuda', action='store_true', help="use CUDA")
@@ -101,6 +105,7 @@ def run_epoch(train_dl, epoch, model, optim):
         loss.backward()
         optim.step()
         pbar.set_postfix(train_loss=loss.item())
+    return model
 
 
 def evaluate(valid_dl, model):
@@ -113,20 +118,10 @@ def evaluate(valid_dl, model):
     return np.array(loss_lst).mean()
 
 
-def split_train_test(args, cnfg, ws):
-    dataset = PermutedSubsampledCorpus(os.path.join(args.data_dir, 'train.dat'), ws)
-    # Creating data indices for training and validation splits:
-    dataset_size = len(dataset)
-    indices = list(range(dataset_size))
-    split = int(np.floor(args.validation_split * dataset_size))
-    train_indices, val_indices = indices[split:], indices[:split]
-    # Creating PT data samplers and loaders:
-    train_sampler = SubsetRandomSampler(train_indices)
-    valid_sampler = SubsetRandomSampler(val_indices)
-
-    train_loader = DataLoader(dataset, batch_size=cnfg['mini_batch'], sampler=train_sampler)
-    validation_loader = DataLoader(dataset, batch_size=cnfg['mini_batch'], sampler=valid_sampler)
-    return train_loader, validation_loader
+def train_to_dl(args):
+    dataset = PermutedSubsampledCorpus(os.path.join(args.data_dir, 'train.dat'))
+    dataloader = DataLoader(dataset, batch_size=args.mb, shuffle=True)
+    return dataloader
 
 
 def train_evaluate(cnfg, args):
@@ -157,15 +152,26 @@ def train_evaluate(cnfg, args):
     if os.path.isfile(optimpath) and args.conti:
         optim.load_state_dict(t.load(optimpath))
 
-    train_loader, validation_loader = split_train_test(args, cnfg, ws)
+    train_loader = train_to_dl(args)
+    user_lsts = users2items()
+    eval_set = pd.read_csv(os.path.join(args.data_dir, 'train.dat'))
 
+    last_epoch_perf = -np.inf
+    perf = 0
     for epoch in range(1, cnfg['epoch'] + 1):
-        run_epoch(train_loader, epoch, sgns, optim)
-        # TODO: implement early stopping, calculate the loss/ specific evaluation metrics on validation
-        #  in each epoch and stop when it stuck.
+        sgns = run_epoch(train_loader, epoch, sgns, optim)
+        e_hr_k = hr_k(sgns, args.k, user_lsts, eval_set)
+        e_mrr_k = mrr_k(sgns, args.k, user_lsts, eval_set)
+        perf = e_hr_k * args.hrk_weight + e_mrr_k(1 - args.hrk_weight)
+        perf_diff = perf - last_epoch_perf
+        if perf_diff < args.conv_thresh:
+            print(f'Early stop at epoch:{epoch}')
+            print(f'HR at {args.k}:{e_hr_k}, MRR at {args.k}:{e_mrr_k}')
+            break
 
-    mean_loss_val = evaluate(validation_loader, model)
-    return mean_loss_val
+        last_epoch_perf = perf
+
+    return perf
 
 
 if __name__ == '__main__':
