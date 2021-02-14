@@ -31,7 +31,7 @@ def users2items():
                         user.append(item)
                     else:
                         user.append(UNK)
-                    user = [item2idx[item] for item in user]
+                user = [item2idx[item] for item in user]
             users.append(user)
     return users
 
@@ -49,6 +49,7 @@ def represent_user(user_items, model):
 
 
 def hr_k(model, k, users2items, eval_set):
+    print(eval_set.head())
     in_top_k = 0
     for u_id, i_id in eval_set[['user_id', 'item_id']].values:
         user2vec = represent_user(users2items[u_id - 1], model)

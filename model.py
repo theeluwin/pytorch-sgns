@@ -70,6 +70,6 @@ class SGNS(nn.Module):
         ivectors = self.embedding.forward_i(iword).unsqueeze(2)
         ovectors = self.embedding.forward_o(owords)
         nvectors = self.embedding.forward_o(nwords).neg()
-        oloss = t.bmm(ovectors, ivectors).squeeze().sigmoid().log().mean(1)
-        nloss = t.bmm(nvectors, ivectors).squeeze().sigmoid().log().view(-1, context_size, self.n_negs).sum(2).mean(1)
+        oloss = t.bmm(ovectors, ivectors).squeeze(dim=-1).sigmoid().log().mean(1)
+        nloss = t.bmm(nvectors, ivectors).squeeze(dim=-1).sigmoid().log().view(-1, context_size, self.n_negs).sum(2).mean(1)
         return -(oloss + nloss).mean()

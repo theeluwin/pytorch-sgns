@@ -14,7 +14,7 @@ def filter_group(group):
 
 def split_train_valid(lsts):
     with open(VALID_PATH, 'a') as valid_file, open(TRAIN_PATH, 'a') as train_file:
-        valid_file.write('user_id, item_id\n')
+        valid_file.write('user_id,item_id\n')
         u = 1
         for u_lst in lsts:
             if len(u_lst):
