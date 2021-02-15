@@ -38,6 +38,7 @@ class PermutedSubsampledCorpus(Dataset):
 def run_epoch(train_dl, epoch, sgns, optim):
     pbar = tqdm(train_dl)
     pbar.set_description("[Epoch {}]".format(epoch))
+
     for iword, owords in pbar:
         loss = sgns(iword, owords)
         optim.zero_grad()
@@ -48,9 +49,7 @@ def run_epoch(train_dl, epoch, sgns, optim):
 
 def train_to_dl(mini_batch_size):
     dataset = PermutedSubsampledCorpus(TRAIN_PATH)
-    dataloader = DataLoader(dataset, batch_size=mini_batch_size, shuffle=True)
-    total_batches = int(np.ceil(len(dataset) / mini_batch_size))
-    return dataloader
+    return DataLoader(dataset, batch_size=mini_batch_size, shuffle=True)
 
 
 def train_evaluate(cnfg):
@@ -63,12 +62,12 @@ def train_evaluate(cnfg):
     assert (wf > 0).all(), 'Items with invalid count appear.'
     ws = 1 - np.sqrt(cnfg['ss_t'] / wf)
     ws = np.clip(ws, 0, 1)
+
     vocab_size = len(idx2word)
     weights = ws if cnfg['weights'] else None
-
     model = Word2Vec(vocab_size=vocab_size, embedding_size=cnfg['e_dim'])
-    sgns = SGNS(embedding=model, vocab_size=vocab_size, n_negs=cnfg['n_negs'], weights=weights)
 
+    sgns = SGNS(embedding=model, vocab_size=vocab_size, n_negs=cnfg['n_negs'], weights=weights)
     if cnfg['cuda']:
         sgns = sgns.cuda()
 
