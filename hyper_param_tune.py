@@ -18,7 +18,7 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
     best_parameters, values, experiment, cur_model = optimize(
         parameters=[
@@ -41,3 +41,6 @@ if __name__ == '__main__':
         total_trials=args.trials
     )
 
+
+if __name__ == '__main__':
+    main()
