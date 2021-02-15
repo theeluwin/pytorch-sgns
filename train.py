@@ -3,19 +3,17 @@
 import os
 import pickle
 import random
-import argparse
-import torch as t
+
 import numpy as np
 import pandas as pd
-
-from tqdm import tqdm
+import torch as t
 from torch.optim import Adam
 from torch.utils.data import Dataset, DataLoader
-from torch.utils.data.sampler import SubsetRandomSampler
-from model import Word2Vec, SGNS
+from tqdm import tqdm
 
-from evaluation import users2items, hr_k, mrr_k
 from config import DATA_DIR, VALID_PATH, TRAIN_PATH
+from evaluation import users2items, hr_k, mrr_k
+from model import Word2Vec, SGNS
 
 
 class PermutedSubsampledCorpus(Dataset):
