@@ -27,7 +27,7 @@ def main():
             {"name": "e_dim", "type": "choice", "value_type": "int", "values": [80, 100, 150, 200, 220, 250]},
             {"name": "n_negs", "type": "choice", "value_type": "int", "values": [5, 7, 10, 15, 50]},
             {"name": "mini_batch", "type": "choice", "value_type": "int", "values": [5, 8, 16, 36]},
-            {"name": "weights", "type": "choice", "value_type": "bool", "values": [True, True]},
+            {"name": "weights", "type": "choice", "value_type": "bool", "values": [True, False]},
             {"name": "max_epoch", "type": "fixed", "value_type": "int", "value": args.max_epoch},
             {"name": "k", "type": "fixed", "value_type": "int", "value": args.k},
             {"name": "conv_thresh", "type": "fixed", "value_type": "float", "value": args.conv_thresh},
