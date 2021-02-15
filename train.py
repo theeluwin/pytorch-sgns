@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os
+import pathlib
 import pickle
 import random
 
@@ -58,8 +58,8 @@ def train_to_dl(mini_batch_size):
 
 
 def train_evaluate(cnfg):
-    idx2word = pickle.load(open(os.path.join(DATA_DIR, 'idx2word.dat'), 'rb'))
-    wc = pickle.load(open(os.path.join(DATA_DIR, 'wc.dat'), 'rb'))
+    idx2word = pickle.load(pathlib.Path(DATA_DIR, 'idx2word.dat').open('rb'))
+    wc = pickle.load(pathlib.Path(DATA_DIR, 'wc.dat').open('rb'))
     wf = np.array([wc[word] for word in idx2word])
     wf = wf / wf.sum()
     ws = 1 - np.sqrt(cnfg['ss_t'] / wf)
