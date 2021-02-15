@@ -36,7 +36,7 @@ def main():
 
         ],
         evaluation_function=train_evaluate,
-        minimize=True,
+        minimize=False,
         objective_name='0.5*hr_k + 0.5*mrr_k',
         total_trials=args.trials
     )
