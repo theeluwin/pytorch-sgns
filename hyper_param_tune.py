@@ -24,7 +24,7 @@ def main():
     args = parse_args()
     best_parameters, _values, _experiment, _cur_model = optimize(
         parameters=[
-            {"name": "lr", "type": "range", "value_type": "float", "bounds": [1e-3, 0.4], "log_scale": True},
+            {"name": "lr", "type": "range", "value_type": "float", "bounds": [1e-3, 1e-1], "log_scale": True},
             {"name": "ss_t", "type": "range", "value_type": "float", "bounds": [1e-5, 3e-3], "log_scale": True},
             {"name": "e_dim", "type": "choice", "value_type": "int", "values": [80, 100, 150, 200, 220, 250]},
             {"name": "n_negs", "type": "choice", "value_type": "int", "values": [5, 7, 10, 15, 50]},
