@@ -6,7 +6,6 @@ import random
 
 import numpy as np
 import pandas as pd
-import torch as t
 from torch.optim import Adam
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
@@ -51,9 +50,6 @@ def train_to_dl(mini_batch_size):
     dataset = PermutedSubsampledCorpus(TRAIN_PATH)
     dataloader = DataLoader(dataset, batch_size=mini_batch_size, shuffle=True)
     total_batches = int(np.ceil(len(dataset) / mini_batch_size))
-    print('total number of batches', total_batches)
-    print('size of dataset', len(dataset))
-    print('batches size with remain', len(dataset) / mini_batch_size)
     return dataloader
 
 
