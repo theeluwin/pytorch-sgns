@@ -1,6 +1,8 @@
-from ax.service.managed_loop import optimize
-from train import train_evaluate
 import argparse
+
+from ax.service.managed_loop import optimize
+
+from train import train_evaluate
 
 
 def parse_args():
