@@ -127,8 +127,7 @@ def train_evaluate(cnfg):
 
     optim = Adam(sgns.parameters(), lr=cnfg['lr'])
 
-    # train_loader = train_to_dl(cnfg['mini_batch'])
-    train_loader = train_to_dl(36)
+    train_loader = train_to_dl(cnfg['mini_batch'])
     user_lsts = users2items()
     eval_set = pd.read_csv(VALID_PATH)
 
