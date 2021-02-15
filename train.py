@@ -137,7 +137,7 @@ def train_evaluate(cnfg):
         run_epoch(train_loader, epoch, sgns, optim)
         e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
         e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
-        perf = e_hr_k * cnfg['hrk_weight'] + e_mrr_k(1 - cnfg['hrk_weight'])
+        perf = e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
         perf_diff = perf - last_epoch_perf
         if perf_diff < cnfg['conv_thresh']:
             print(f"Early stop at epoch:{epoch}")
