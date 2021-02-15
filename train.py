@@ -60,8 +60,11 @@ def train_to_dl(mini_batch_size):
 def train_evaluate(cnfg):
     idx2word = pickle.load(pathlib.Path(DATA_DIR, 'idx2word.dat').open('rb'))
     wc = pickle.load(pathlib.Path(DATA_DIR, 'wc.dat').open('rb'))
+
     wf = np.array([wc[word] for word in idx2word])
     wf = wf / wf.sum()
+
+    assert (wf > 0).all(), 'Items with invalid count appear.'
     ws = 1 - np.sqrt(cnfg['ss_t'] / wf)
     ws = np.clip(ws, 0, 1)
     vocab_size = len(idx2word)
