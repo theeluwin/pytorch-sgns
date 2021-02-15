@@ -22,16 +22,16 @@ if __name__ == '__main__':
     args = parse_args()
     best_parameters, values, experiment, cur_model = optimize(
         parameters=[
-            {"name": "lr", "type": "range", "bounds": [1e-6, 0.4], "log_scale": True},
-            {"name": "ss_t", "type": "range", "bounds": [1e-6, 0.4], "log_scale": True},
-            {"name": "e_dim", "type": "choice", "values": [80, 100, 150, 200, 220, 250]},
-            {"name": "n_negs", "type": "choice", "values": [5, 7, 10, 15, 50]},
-            {"name": "mini_batch", "type": "choice", "values": [5, 8, 16, 36]},
-            {"name": "weights", "type": "choice", "values": [True, False]},
-            {"name": "max_epoch", "type": "fixed", "value": args.max_epoch},
-            {"name": "k", "type": "fixed", "value": args.k},
-            {"name": "conv_thresh", "type": "fixed", "value": args.conv_thresh},
-            {"name": "hrk_weight", "type": "fixed", "value": args.hrk_weight},
+            {"name": "lr", "type": "range", "value_type": "float", "bounds": [1e-3, 0.4], "log_scale": True},
+            {"name": "ss_t", "type": "range", "value_type": "float", "bounds": [1e-5, 3e-3], "log_scale": True},
+            {"name": "e_dim", "type": "choice", "value_type": "int", "values": [80, 100, 150, 200, 220, 250]},
+            {"name": "n_negs", "type": "choice", "value_type": "int", "values": [5, 7, 10, 15, 50]},
+            {"name": "mini_batch", "type": "choice", "value_type": "int", "values": [5, 8, 16, 36]},
+            {"name": "weights", "type": "choice", "value_type": "bool", "values": [True, True]},
+            {"name": "max_epoch", "type": "fixed", "value_type": "int", "value": args.max_epoch},
+            {"name": "k", "type": "fixed", "value_type": "int", "value": args.k},
+            {"name": "conv_thresh", "type": "fixed", "value_type": "float", "value": args.conv_thresh},
+            {"name": "hrk_weight", "type": "fixed", "value_type": "float", "value": args.hrk_weight},
             {"name": "cuda", "type": "fixed", "value": args.cuda},
 
         ],
