@@ -12,22 +12,28 @@ VALID_PATH = DATA_DIR + 'valid.txt'
 UNK = '<UNK>'
 
 
+def _extract_user_items(corpus_line, vocab, item2idx):
+    return \
+        [
+            item2idx[item] if item in vocab else item2idx[UNK]
+            for item
+            in corpus_line.split()
+        ]
+
+
 def users2items():
     users = []
     item2idx = pickle.load(open(ITEM2IDX_PATH, 'rb'))
     vocab = pickle.load(open(VOCAB_PATH, 'rb'))
     with codecs.open(CORPUS_PATH, 'r', encoding='utf-8') as corpus:
         for corpus_line in corpus:
-            user = []
             corpus_line = corpus_line.strip()
-            if corpus_line:
-                for item in corpus_line.split():
-                    if item in vocab:
-                        user.append(item)
-                    else:
-                        user.append(UNK)
-                user = [item2idx[item] for item in user]
-            users.append(user)
+
+            if not corpus_line:
+                users.append([])
+                continue
+
+            users.append(_extract_user_items(corpus_line=corpus_line, vocab=vocab, item2idx=item2idx))
     return users
 
 
