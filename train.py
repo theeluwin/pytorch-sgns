@@ -6,7 +6,7 @@ import random
 
 import numpy as np
 import pandas as pd
-from torch.optim import Adam
+from torch.optim import Adagrad
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
@@ -53,6 +53,7 @@ def train_to_dl(mini_batch_size):
 
 
 def train_evaluate(cnfg):
+    print(cnfg)
     idx2word = pickle.load(pathlib.Path(DATA_DIR, 'idx2word.dat').open('rb'))
     wc = pickle.load(pathlib.Path(DATA_DIR, 'wc.dat').open('rb'))
 
@@ -71,7 +72,7 @@ def train_evaluate(cnfg):
     if cnfg['cuda']:
         sgns = sgns.cuda()
 
-    optim = Adam(sgns.parameters(), lr=cnfg['lr'])
+    optim = Adagrad(sgns.parameters(), lr=cnfg['lr'])
 
     train_loader = train_to_dl(cnfg['mini_batch'])
     user_lsts = users2items()
@@ -83,6 +84,7 @@ def train_evaluate(cnfg):
         e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
         e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
         perf = e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
+        print(perf)
         perf_diff = perf - last_epoch_perf
         if perf_diff < cnfg['conv_thresh']:
             print(f"Early stop at epoch:{epoch}")
