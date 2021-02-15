@@ -20,7 +20,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    best_parameters, values, experiment, cur_model = optimize(
+    best_parameters, _values, _experiment, _cur_model = optimize(
         parameters=[
             {"name": "lr", "type": "range", "value_type": "float", "bounds": [1e-3, 0.4], "log_scale": True},
             {"name": "ss_t", "type": "range", "value_type": "float", "bounds": [1e-5, 3e-3], "log_scale": True},
