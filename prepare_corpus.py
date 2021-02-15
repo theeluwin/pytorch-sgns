@@ -1,5 +1,7 @@
-import pandas as pd
 import random
+
+import pandas as pd
+
 from config import DATA_FPATH, TRAIN_PATH, VALID_PATH, DATA_COLS, POS_THRESH
 
 
