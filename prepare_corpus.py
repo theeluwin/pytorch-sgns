@@ -28,10 +28,14 @@ def split_train_valid(lsts):
             u += 1
 
 
-if __name__ == '__main__':
+def main():
     data = pd.read_csv(DATA_FPATH, delimiter='\t', names=DATA_COLS)
     users2items = data.groupby('user_id').apply(lambda group: filter_group(group))
     split_train_valid(users2items)
+
+
+if __name__ == '__main__':
+    main()
 
 
 
