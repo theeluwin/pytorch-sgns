@@ -51,11 +51,9 @@ def represent_user(user_items, model):
 
 def hr_k(model, k, users2items, eval_set):
     in_top_k = 0
-    for u_id, i_id in eval_set[['user_id', 'item_id']].values:
-        user2vec = represent_user(users2items[u_id - 1], model).reshape(1, -1)
-        user_sim = cosine_similarity(user2vec, model.ivectors.weight.data.cpu().numpy()).squeeze()
-        target_item = int(i_id)
-        top_k_items = user_sim.argsort()[-k:][::-1] + 1
+    for u_id, target_item in eval_set[['user_id', 'item_id']].values:
+        # TODO convert it to tensors?
+        top_k_items = _calc_item_rank(k, model, u_id, users2items)
         if target_item in top_k_items:
             in_top_k += 1
     hr_k = in_top_k / eval_set.shape[0]
@@ -64,15 +62,18 @@ def hr_k(model, k, users2items, eval_set):
 
 def mrr_k(model, k, users2items, eval_set):
     in_top_k, rec_rank = 0, 0
-    for u_id, i_id in eval_set[['user_id', 'item_id']].values:
-        user2vec = represent_user(users2items[u_id - 1], model).reshape(1, -1)
-        user_sim = cosine_similarity(user2vec, model.ivectors.weight.data.cpu().numpy()).squeeze()
-        target_item = int(i_id)
-        top_k_items = user_sim.argsort()[-k:][::-1] + 1
+    for u_id, target_item in eval_set[['user_id', 'item_id']].values:
+        top_k_items = _calc_item_rank(k, model, u_id, users2items)
         if target_item in top_k_items:
             in_top_k += 1
             rec_rank += 1 / (np.where(top_k_items == target_item)[0][0] + 1)
     mrp_k = rec_rank / in_top_k
     return mrp_k
 
+
+def _calc_item_rank(k, model, u_id, users2items):
+    user2vec = represent_user(users2items[u_id - 1], model).reshape(1, -1)
+    user_sim = cosine_similarity(user2vec, model.ivectors.weight.data.cpu().numpy()).squeeze()
+    top_k_items = user_sim.argsort()[-k:][::-1] + 1
+    return top_k_items
 
