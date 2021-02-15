@@ -82,8 +82,12 @@ class Preprocess(object):
         print("conversion done")
 
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
     preprocess = Preprocess(window=args.window, unk=args.unk, data_dir=args.data_dir)
     preprocess.build(args.vocab, max_vocab=args.max_vocab)
     preprocess.convert(args.corpus)
+
+
+if __name__ == '__main__':
+    main()
