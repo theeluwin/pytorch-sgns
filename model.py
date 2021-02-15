@@ -71,5 +71,7 @@ class SGNS(nn.Module):
         ovectors = self.embedding.forward_o(owords)
         nvectors = self.embedding.forward_o(nwords).neg()
         oloss = t.bmm(ovectors, ivectors).squeeze(dim=-1).sigmoid().log().mean(1)
+        assert oloss.shape[0] == batch_size, 'oloss vector shape is different than batch size'
         nloss = t.bmm(nvectors, ivectors).squeeze(dim=-1).sigmoid().log().view(-1, context_size, self.n_negs).sum(2).mean(1)
+        assert nloss.shape[0] == batch_size, 'nloss vector shape is different than batch size'
         return -(oloss + nloss).mean()
