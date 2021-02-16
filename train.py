@@ -54,7 +54,7 @@ def train_to_dl(mini_batch_size, train_path):
 def train_evaluate(cnfg):
     print(cnfg)
     idx2word = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
-    wc = pickle.load(pathlib.Path(cnfg['data_dir'], 'wc.dat').open('rb'))
+    wc = pickle.load(pathlib.Path(cnfg['data_dir'], 'ic.dat').open('rb'))
 
     wf = np.array([wc[word] for word in idx2word])
     wf = wf / wf.sum()
