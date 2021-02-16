@@ -42,9 +42,15 @@ def split_train_valid(lsts, corpus_path, valid_path):
             u += 1
 
 
+def read_data(path, data_cols):
+    data = pd.read_csv(path, delimiter='\t', names=data_cols)
+    data[['user_id', 'item_id']] = data[['user_id', 'item_id']].apply(lambda col: col-1)
+    return data
+
+
 def main():
     args = parse_args()
-    data = pd.read_csv(args.source_data, delimiter='\t', names=DATA_COLS)
+    data = read_data(args.source_data, DATA_COLS)
     users2items = data.groupby('user_id').apply(lambda group: filter_group(group, args.pos_thresh, args.min_items))
     split_train_valid(users2items, args.corpus_path, args.valid_path)
 
