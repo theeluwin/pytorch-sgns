@@ -34,12 +34,6 @@ def users2items(item2index_path, vocab_path, corpus_path):
 
 
 def represent_user(user_items, model):
-    """
-    represent each user as the mean of his items context representations.
-    :param user_items: list of item indices of a specific user.
-    :param model: SGNS model.
-    :return: user representation
-    """
     context_vecs = model.ovectors.weight.data.cpu().numpy()
     user2vec = context_vecs[user_items, :].mean(axis=0)
     return user2vec
