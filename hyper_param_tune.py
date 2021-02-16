@@ -35,6 +35,7 @@ def main():
             {"name": "conv_thresh", "type": "fixed", "value_type": "float", "value": args.conv_thresh},
             {"name": "hrk_weight", "type": "fixed", "value_type": "float", "value": args.hrk_weight},
             {"name": "cuda", "type": "fixed", "value": args.cuda},
+            {"name": "data_dir", "type": "fixed", "value_type": "str", "value": args.data_dir},
 
         ],
         evaluation_function=train_evaluate,
