@@ -76,7 +76,7 @@ def train_evaluate(cnfg):
     train_loader = train_to_dl(cnfg['mini_batch'],
                                pathlib.Path(cnfg['data_dir'], 'train.dat'))
 
-    user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'idx2word.dat'),
+    user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'idx2item.dat'),
                             pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
                             pathlib.Path(cnfg['data_dir'], 'corpus.txt'))
     eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
