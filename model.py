@@ -20,10 +20,10 @@ class Bundler(nn.Module):
         raise NotImplementedError
 
 
-class Word2Vec(Bundler):
+class Item2Vec(Bundler):
 
     def __init__(self, vocab_size=20000, embedding_size=300, padding_idx=0):
-        super(Word2Vec, self).__init__()
+        super(Item2Vec, self).__init__()
         self.vocab_size = vocab_size
         self.embedding_size = embedding_size
         self.ivectors = nn.Embedding(self.vocab_size, self.embedding_size, padding_idx=padding_idx)
@@ -60,16 +60,16 @@ class SGNS(nn.Module):
             wf = wf / wf.sum()
             self.weights = FT(wf)
 
-    def forward(self, iword, owords):
-        batch_size = iword.size()[0]
-        context_size = owords.size()[1]
+    def forward(self, iitem, oitems):
+        batch_size = iitem.size()[0]
+        context_size = oitems.size()[1]
         if self.weights is not None:
-            nwords = t.multinomial(self.weights, batch_size * context_size * self.n_negs, replacement=True).view(batch_size, -1)
+            nitems = t.multinomial(self.weights, batch_size * context_size * self.n_negs, replacement=True).view(batch_size, -1)
         else:
-            nwords = FT(batch_size, context_size * self.n_negs).uniform_(0, self.vocab_size - 1).long()
-        ivectors = self.embedding.forward_i(iword).unsqueeze(2)
-        ovectors = self.embedding.forward_o(owords)
-        nvectors = self.embedding.forward_o(nwords).neg()
+            nitems = FT(batch_size, context_size * self.n_negs).uniform_(0, self.vocab_size - 1).long()
+        ivectors = self.embedding.forward_i(iitem).unsqueeze(2)
+        ovectors = self.embedding.forward_o(oitems)
+        nvectors = self.embedding.forward_o(nitems).neg()
         oloss = t.bmm(ovectors, ivectors).squeeze(dim=-1).sigmoid().log().mean(1)
         assert oloss.shape[0] == batch_size, 'oloss vector shape is different than batch size'
         nloss = t.bmm(nvectors, ivectors).squeeze(dim=-1).sigmoid().log().view(-1, context_size, self.n_negs).sum(2).mean(1)
