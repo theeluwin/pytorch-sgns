@@ -68,8 +68,8 @@ def mrr_k(model, k, users2items, eval_set):
 
 
 def _calc_item_rank(k, model, u_id, users2items):
-    user2vec = represent_user(users2items[u_id - 1], model).reshape(1, -1)
+    user2vec = represent_user(users2items[u_id], model).reshape(1, -1)
     user_sim = cosine_similarity(user2vec, model.ivectors.weight.data.cpu().numpy()).squeeze()
-    top_k_items = user_sim.argsort()[-k:][::-1] + 1
+    top_k_items = user_sim.argsort()[-k:][::-1]
     return top_k_items
 
