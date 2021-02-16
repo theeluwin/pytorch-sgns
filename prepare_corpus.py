@@ -29,7 +29,7 @@ def filter_group(group, pos_thresh, min_items):
 def split_train_valid(lsts, corpus_path, valid_path):
     with open(corpus_path, 'a') as corpus_file, open(valid_path, 'a') as valid_file:
         valid_file.write('user_id,item_id\n')
-        u = 1
+        u = 0
         for u_lst in lsts:
             if len(u_lst):
                 item = random.choice(u_lst)
