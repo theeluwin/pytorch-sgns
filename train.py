@@ -10,7 +10,6 @@ from torch.optim import Adagrad
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
-from config import DATA_DIR, VALID_PATH, TRAIN_PATH
 from evaluation import users2items, hr_k, mrr_k
 from model import Word2Vec, SGNS
 
@@ -18,7 +17,7 @@ from model import Word2Vec, SGNS
 class PermutedSubsampledCorpus(Dataset):
 
     def __init__(self, datapath, ws=None):
-        data = pickle.load(open(datapath, 'rb'))
+        data = pickle.load(datapath.open('rb'))
         if ws is not None:
             self.data = []
             for iword, owords in data:
@@ -47,15 +46,15 @@ def run_epoch(train_dl, epoch, sgns, optim):
         pbar.set_postfix(train_loss=loss.item())
 
 
-def train_to_dl(mini_batch_size):
-    dataset = PermutedSubsampledCorpus(TRAIN_PATH)
+def train_to_dl(mini_batch_size, cnfg):
+    dataset = PermutedSubsampledCorpus(pathlib.Path(cnfg['data_dir'], 'train.dat'))
     return DataLoader(dataset, batch_size=mini_batch_size, shuffle=True)
 
 
 def train_evaluate(cnfg):
     print(cnfg)
-    idx2word = pickle.load(pathlib.Path(DATA_DIR, 'idx2word.dat').open('rb'))
-    wc = pickle.load(pathlib.Path(DATA_DIR, 'wc.dat').open('rb'))
+    idx2word = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2word.dat').open('rb'))
+    wc = pickle.load(pathlib.Path(cnfg['data_dir'], 'wc.dat').open('rb'))
 
     wf = np.array([wc[word] for word in idx2word])
     wf = wf / wf.sum()
@@ -76,7 +75,7 @@ def train_evaluate(cnfg):
 
     train_loader = train_to_dl(cnfg['mini_batch'])
     user_lsts = users2items()
-    eval_set = pd.read_csv(VALID_PATH)
+    eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
 
     last_epoch_perf = -np.inf
     for epoch in range(1, cnfg['max_epoch'] + 1):
