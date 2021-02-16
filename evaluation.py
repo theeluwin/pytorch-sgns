@@ -48,7 +48,6 @@ def represent_user(user_items, model):
 def hr_k(model, k, users2items, eval_set):
     in_top_k = 0
     for u_id, target_item in eval_set[['user_id', 'item_id']].values:
-        # TODO convert it to tensors?
         top_k_items = _calc_item_rank(k, model, u_id, users2items)
         if target_item in top_k_items:
             in_top_k += 1
