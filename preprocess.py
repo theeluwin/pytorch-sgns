@@ -49,10 +49,10 @@ class Preprocess(object):
         self.idx2word = [self.unk] + sorted(self.wc, key=self.wc.get, reverse=True)[:max_vocab - 1]
         self.word2idx = {self.idx2word[idx]: idx for idx, _ in enumerate(self.idx2word)}
         self.vocab = set([word for word in self.word2idx])
-        pickle.dump(self.wc, open(os.path.join(self.data_dir, 'wc.dat'), 'wb'))
+        pickle.dump(self.wc, open(os.path.join(self.data_dir, 'ic.dat'), 'wb'))
         pickle.dump(self.vocab, open(os.path.join(self.data_dir, 'vocab.dat'), 'wb'))
-        pickle.dump(self.idx2word, open(os.path.join(self.data_dir, 'idx2word.dat'), 'wb'))
-        pickle.dump(self.word2idx, open(os.path.join(self.data_dir, 'word2idx.dat'), 'wb'))
+        pickle.dump(self.idx2word, open(os.path.join(self.data_dir, 'idx2item.dat'), 'wb'))
+        pickle.dump(self.word2idx, open(os.path.join(self.data_dir, 'item2idx.dat'), 'wb'))
         print("build done")
 
     def convert(self, filepath):
