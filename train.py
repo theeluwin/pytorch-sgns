@@ -11,7 +11,7 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
 from evaluation import users2items, hr_k, mrr_k
-from model import Word2Vec, SGNS
+from model import Item2Vec, SGNS
 
 
 class PermutedSubsampledCorpus(Dataset):
@@ -65,7 +65,7 @@ def train_evaluate(cnfg):
 
     vocab_size = len(idx2item)
     weights = istt if cnfg['weights'] else None
-    model = Word2Vec(vocab_size=vocab_size, embedding_size=cnfg['e_dim'])
+    model = Item2Vec(vocab_size=vocab_size, embedding_size=cnfg['e_dim'])
 
     sgns = SGNS(embedding=model, vocab_size=vocab_size, n_negs=cnfg['n_negs'], weights=weights)
     if cnfg['cuda']:
