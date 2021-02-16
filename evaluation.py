@@ -4,11 +4,7 @@ import pickle
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-DATA_DIR = 'data/'
-CORPUS_PATH = DATA_DIR + 'corpus.txt'
-VOCAB_PATH = DATA_DIR + 'vocab.dat'
-ITEM2IDX_PATH = DATA_DIR + 'word2idx.dat'
-VALID_PATH = DATA_DIR + 'valid.txt'
+
 UNK = '<UNK>'
 
 
@@ -21,11 +17,11 @@ def _extract_user_items(corpus_line, vocab, item2idx):
         ]
 
 
-def users2items():
+def users2items(item2index_path, vocab_path, corpus_path):
     users = []
-    item2idx = pickle.load(open(ITEM2IDX_PATH, 'rb'))
-    vocab = pickle.load(open(VOCAB_PATH, 'rb'))
-    with codecs.open(CORPUS_PATH, 'r', encoding='utf-8') as corpus:
+    item2idx = pickle.load(open(item2index_path, 'rb'))
+    vocab = pickle.load(open(vocab_path, 'rb'))
+    with codecs.open(corpus_path, 'r', encoding='utf-8') as corpus:
         for corpus_line in corpus:
             corpus_line = corpus_line.strip()
 
