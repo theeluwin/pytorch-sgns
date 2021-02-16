@@ -46,14 +46,14 @@ def run_epoch(train_dl, epoch, sgns, optim):
         pbar.set_postfix(train_loss=loss.item())
 
 
-def train_to_dl(mini_batch_size, cnfg):
-    dataset = PermutedSubsampledCorpus(pathlib.Path(cnfg['data_dir'], 'train.dat'))
+def train_to_dl(mini_batch_size, train_path):
+    dataset = PermutedSubsampledCorpus(train_path)
     return DataLoader(dataset, batch_size=mini_batch_size, shuffle=True)
 
 
 def train_evaluate(cnfg):
     print(cnfg)
-    idx2word = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2word.dat').open('rb'))
+    idx2word = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
     wc = pickle.load(pathlib.Path(cnfg['data_dir'], 'wc.dat').open('rb'))
 
     wf = np.array([wc[word] for word in idx2word])
@@ -73,8 +73,12 @@ def train_evaluate(cnfg):
 
     optim = Adagrad(sgns.parameters(), lr=cnfg['lr'])
 
-    train_loader = train_to_dl(cnfg['mini_batch'])
-    user_lsts = users2items()
+    train_loader = train_to_dl(cnfg['mini_batch'],
+                               pathlib.Path(cnfg['data_dir'], 'train.dat'))
+
+    user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'idx2word.dat'),
+                            pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
+                            pathlib.Path(cnfg['data_dir'], 'corpus.txt'))
     eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
 
     last_epoch_perf = -np.inf
