@@ -52,7 +52,7 @@ def main():
     args = parse_args()
     data = read_data(args.source_data, DATA_COLS)
     users2items = data.groupby('user_id').apply(lambda group: filter_group(group, args.pos_thresh, args.min_items))
-    print(f'number of users:{len(users2items)}, number of items:'
+    print(f'number of users: {len(users2items)}, number of items: '
           f'{len(set([items for item in users2items.tolist() for items in item]))}')
     split_train_valid(users2items, args.corpus_path, args.valid_path)
 
