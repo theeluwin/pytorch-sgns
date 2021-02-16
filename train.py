@@ -20,9 +20,9 @@ class PermutedSubsampledCorpus(Dataset):
         data = pickle.load(datapath.open('rb'))
         if ws is not None:
             self.data = []
-            for iword, owords in data:
-                if random.random() > ws[iword]:
-                    self.data.append((iword, owords))
+            for iitem, oitems in data:
+                if random.random() > ws[iitem]:
+                    self.data.append((iitem, oitems))
         else:
             self.data = data
 
@@ -30,16 +30,16 @@ class PermutedSubsampledCorpus(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        iword, owords = self.data[idx]
-        return iword, np.array(owords)
+        iitem, oitems = self.data[idx]
+        return iitem, np.array(oitems)
 
 
 def run_epoch(train_dl, epoch, sgns, optim):
     pbar = tqdm(train_dl)
     pbar.set_description("[Epoch {}]".format(epoch))
 
-    for iword, owords in pbar:
-        loss = sgns(iword, owords)
+    for iitem, oitems in pbar:
+        loss = sgns(iitem, oitems)
         optim.zero_grad()
         loss.backward()
         optim.step()
@@ -53,18 +53,18 @@ def train_to_dl(mini_batch_size, train_path):
 
 def train_evaluate(cnfg):
     print(cnfg)
-    idx2word = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
-    wc = pickle.load(pathlib.Path(cnfg['data_dir'], 'ic.dat').open('rb'))
+    idx2item = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
+    ic = pickle.load(pathlib.Path(cnfg['data_dir'], 'ic.dat').open('rb'))
 
-    wf = np.array([wc[word] for word in idx2word])
-    wf = wf / wf.sum()
+    ifr = np.array([ic[item] for item in idx2item])
+    ifr = ifr / ifr.sum()
 
-    assert (wf > 0).all(), 'Items with invalid count appear.'
-    ws = 1 - np.sqrt(cnfg['ss_t'] / wf)
-    ws = np.clip(ws, 0, 1)
+    assert (ifr > 0).all(), 'Items with invalid count appear.'
+    istt = 1 - np.sqrt(cnfg['ss_t'] / ifr)
+    istt = np.clip(istt, 0, 1)
 
-    vocab_size = len(idx2word)
-    weights = ws if cnfg['weights'] else None
+    vocab_size = len(idx2item)
+    weights = istt if cnfg['weights'] else None
     model = Word2Vec(vocab_size=vocab_size, embedding_size=cnfg['e_dim'])
 
     sgns = SGNS(embedding=model, vocab_size=vocab_size, n_negs=cnfg['n_negs'], weights=weights)
