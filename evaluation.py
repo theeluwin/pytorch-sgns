@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 UNK = '<UNK>'
 
 
-def _extract_user_items(corpus_line, vocab, item2idx):
+def _extract_item_ids(corpus_line, vocab, item2idx):
     return \
         [
             item2idx[item] if item in vocab else item2idx[UNK]
@@ -29,7 +29,7 @@ def users2items(item2index_path, vocab_path, corpus_path):
                 users.append([])
                 continue
 
-            users.append(_extract_user_items(corpus_line=corpus_line, vocab=vocab, item2idx=item2idx))
+            users.append(_extract_item_ids(corpus_line=corpus_line, vocab=vocab, item2idx=item2idx))
     return users
 
 
