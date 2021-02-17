@@ -6,6 +6,7 @@ import random
 
 import numpy as np
 import pandas as pd
+import torch as t
 from torch.optim import Adagrad
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
@@ -37,15 +38,17 @@ class PermutedSubsampledCorpus(Dataset):
 def run_epoch(train_dl, epoch, sgns, optim):
     pbar = tqdm(train_dl)
     pbar.set_description("[Epoch {}]".format(epoch))
+    train_losses = []
 
     for iitem, oitems in pbar:
         loss = sgns(iitem, oitems)
+        train_losses.append(loss)
         optim.zero_grad()
         loss.backward()
         optim.step()
         pbar.set_postfix(train_loss=loss.item())
 
-    return loss.item()
+    print(f'train_loss: {np.average(train_losses)}')
 
 
 def train_to_dl(mini_batch_size, train_path):
@@ -89,7 +92,7 @@ def train_evaluate(cnfg):
     #     mode='max'
     # )
     for epoch in range(1, cnfg['max_epoch'] + 1):
-        train_loss = run_epoch(train_loader, epoch, sgns, optim)
+        run_epoch(train_loader, epoch, sgns, optim)
         if cnfg['valid']:
             user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'item2idx.dat'),
                                     pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
@@ -108,7 +111,7 @@ def train_evaluate(cnfg):
             #     early_stop_epoch = epoch
             #     print("Early stopping")
             #     break
-            print(f'train_loss:{train_loss}, valid acc:{perf}')
+            print(f'valid acc:{perf}')
             if perf_diff < cnfg['conv_thresh']:
                 early_stop_epoch = epoch
                 print(f"Early stop at epoch:{epoch}")
@@ -116,8 +119,12 @@ def train_evaluate(cnfg):
                 break
 
             last_epoch_perf = perf
-        else:
-            print(f'train_loss:{train_loss}')
 
+    if 'save_dir' in cnfg.keys():
+        ivectors = model.ivectors.weight.data.cpu().numpy()
+        ovectors = model.ovectors.weight.data.cpu().numpy()
+        pickle.dump(ivectors, open(pathlib.Path(cnfg['save_dir'], 'idx2ivec.dat'), 'wb'))
+        pickle.dump(ovectors, open(pathlib.Path(cnfg['save_dir'], 'idx2ovec.dat'), 'wb'))
+        t.save(sgns.state_dict(), pathlib.Path(cnfg['save_dir'], 'sgns.pt'))
     return {'0.5*hr_k + 0.5*mrr_k': (last_epoch_perf, 0.0), 'early_stop_epoch': (early_stop_epoch, 0.0)}
 
