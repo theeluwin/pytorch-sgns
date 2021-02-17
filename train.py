@@ -93,7 +93,7 @@ def train_evaluate(cnfg):
         if cnfg['valid']:
             user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'item2idx.dat'),
                                     pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
-                                    pathlib.Path(cnfg['data_dir'], 'corpus.txt'))
+                                    pathlib.Path(cnfg['data_dir'], 'train_corpus.txt'))
             eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
             e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
             e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
