@@ -116,8 +116,8 @@ def train_evaluate(cnfg):
                 break
 
             last_epoch_perf = perf
-
-        print(f'train_loss:{train_loss}')
+        else:
+            print(f'train_loss:{train_loss}')
 
     return {'0.5*hr_k + 0.5*mrr_k': (last_epoch_perf, 0.0), 'early_stop_epoch': (early_stop_epoch, 0.0)}
 
