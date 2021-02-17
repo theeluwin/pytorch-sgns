@@ -36,6 +36,7 @@ def main():
             {"name": "hrk_weight", "type": "fixed", "value_type": "float", "value": args.hrk_weight},
             {"name": "cuda", "type": "fixed", "value": args.cuda},
             {"name": "data_dir", "type": "fixed", "value_type": "str", "value": args.data_dir},
+            {"name": "valid", "type": "fixed", "value_type": "bool", "value": True}
 
         ],
         evaluation_function=train_evaluate,
@@ -43,6 +44,7 @@ def main():
         objective_name='0.5*hr_k + 0.5*mrr_k',
         total_trials=args.trials
     )
+    print(values)
 
 
 if __name__ == '__main__':
