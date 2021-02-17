@@ -78,11 +78,6 @@ def train_evaluate(cnfg):
     train_loader = train_to_dl(cnfg['mini_batch'],
                                pathlib.Path(cnfg['data_dir'], 'train.dat'))
 
-    user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'item2idx.dat'),
-                            pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
-                            pathlib.Path(cnfg['data_dir'], 'corpus.txt'))
-    eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
-
     last_epoch_perf = -np.inf
     early_stop_epoch = cnfg['max_epoch'] + 1
 
@@ -93,10 +88,13 @@ def train_evaluate(cnfg):
     #     verbose=False,
     #     mode='max'
     # )
-    epochs_len = str(cnfg['max_epoch'] + 1)
     for epoch in range(1, cnfg['max_epoch'] + 1):
         train_loss = run_epoch(train_loader, epoch, sgns, optim)
         if cnfg['valid']:
+            user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'item2idx.dat'),
+                                    pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
+                                    pathlib.Path(cnfg['data_dir'], 'corpus.txt'))
+            eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
             e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
             e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
             perf = e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
