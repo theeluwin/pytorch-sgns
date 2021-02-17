@@ -82,6 +82,7 @@ def train_evaluate(cnfg):
     eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
 
     last_epoch_perf = -np.inf
+    early_stop_epoch = cnfg['max_epoch'] + 1
     for epoch in range(1, cnfg['max_epoch'] + 1):
         run_epoch(train_loader, epoch, sgns, optim)
         e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
@@ -90,11 +91,12 @@ def train_evaluate(cnfg):
         print(perf)
         perf_diff = perf - last_epoch_perf
         if perf_diff < cnfg['conv_thresh']:
+            early_stop_epoch = epoch
             print(f"Early stop at epoch:{epoch}")
             print(f"HR at {cnfg['k']}:{e_hr_k}, MRR at {cnfg['k']}:{e_mrr_k}")
             break
 
         last_epoch_perf = perf
 
-    return last_epoch_perf
+    return {'0.5*hr_k + 0.5*mrr_k': last_epoch_perf, 'early_stop_epoch': early_stop_epoch}
 
