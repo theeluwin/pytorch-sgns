@@ -10,7 +10,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, default='./data/', help="data directory path")
     parser.add_argument('--vocab', type=str, default='./data/corpus.txt', help="corpus path for building vocab")
-    parser.add_argument('--corpus', type=str, default='./data/corpus.txt', help="corpus path")
+    parser.add_argument('--corpus', type=str, default='./data/train_corpus.txt', help="corpus path")
     parser.add_argument('--unk', type=str, default='<UNK>', help="UNK token")
     parser.add_argument('--window', type=int, default=5, help="window size")
     parser.add_argument('--max_vocab', type=int, default=20000, help="maximum number of vocab")
