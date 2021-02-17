@@ -45,6 +45,8 @@ def run_epoch(train_dl, epoch, sgns, optim):
         optim.step()
         pbar.set_postfix(train_loss=loss.item())
 
+    return loss.item()
+
 
 def train_to_dl(mini_batch_size, train_path):
     dataset = PermutedSubsampledCorpus(train_path)
@@ -83,20 +85,41 @@ def train_evaluate(cnfg):
 
     last_epoch_perf = -np.inf
     early_stop_epoch = cnfg['max_epoch'] + 1
+
+    # early_stopping = EarlyStopping(
+    #     monitor='val_accuracy',
+    #     min_delta=0.00,
+    #     patience=3,
+    #     verbose=False,
+    #     mode='max'
+    # )
+    epochs_len = str(cnfg['max_epoch'] + 1)
     for epoch in range(1, cnfg['max_epoch'] + 1):
-        run_epoch(train_loader, epoch, sgns, optim)
-        e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
-        e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
-        perf = e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
-        print(perf)
-        perf_diff = perf - last_epoch_perf
-        if perf_diff < cnfg['conv_thresh']:
-            early_stop_epoch = epoch
-            print(f"Early stop at epoch:{epoch}")
-            print(f"HR at {cnfg['k']}:{e_hr_k}, MRR at {cnfg['k']}:{e_mrr_k}")
-            break
+        train_loss = run_epoch(train_loader, epoch, sgns, optim)
+        if cnfg['valid']:
+            e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
+            e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
+            perf = e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
+            perf_diff = perf - last_epoch_perf
 
-        last_epoch_perf = perf
+            # # early_stopping needs the validation loss to check if it has decresed,
+            # # and if it has, it will make a checkpoint of the current model
+            # early_stopping(perf, model)
+            #
+            # if early_stopping.early_stop:
+            #     early_stop_epoch = epoch
+            #     print("Early stopping")
+            #     break
+            print(f'train_loss:{train_loss}, valid acc:{perf}')
+            if perf_diff < cnfg['conv_thresh']:
+                early_stop_epoch = epoch
+                print(f"Early stop at epoch:{epoch}")
+                print(f"HR at {cnfg['k']}:{e_hr_k}, MRR at {cnfg['k']}:{e_mrr_k}")
+                break
 
-    return {'0.5*hr_k + 0.5*mrr_k': last_epoch_perf, 'early_stop_epoch': early_stop_epoch}
+            last_epoch_perf = perf
+
+        print(f'train_loss:{train_loss}')
+
+    return {'0.5*hr_k + 0.5*mrr_k': (last_epoch_perf, 0.0), 'early_stop_epoch': (early_stop_epoch, 0.0)}
 
