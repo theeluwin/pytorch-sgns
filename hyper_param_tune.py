@@ -20,6 +20,13 @@ def parse_args():
     return parser.parse_args()
 
 
+def full_train(cnfg, epochs, save_path):
+    cnfg['valid'] = False
+    cnfg['max_epoch'] = epochs
+    cnfg['save_dir'] = save_path
+    _perf, _early_stop_epoch = train_evaluate(cnfg)
+
+
 def main():
     args = parse_args()
     best_parameters, values, _experiment, _cur_model = optimize(
@@ -44,7 +51,8 @@ def main():
         objective_name='0.5*hr_k + 0.5*mrr_k',
         total_trials=args.trials
     )
-    print(values)
+
+    full_train(best_parameters, values[0]['early_stop_epoch'], args['save_dir'])
 
 
 if __name__ == '__main__':
