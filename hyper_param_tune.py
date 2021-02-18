@@ -2,7 +2,7 @@ import argparse
 
 from ax.service.managed_loop import optimize
 
-from train import train_evaluate
+from train import train_evaluate, train
 
 
 def parse_args():
@@ -10,6 +10,8 @@ def parse_args():
     parser.add_argument('--name', type=str, default='sgns', help="model name")
     parser.add_argument('--data_dir', type=str, default='./data/', help="data directory path")
     parser.add_argument('--save_dir', type=str, default='./output/', help="model directory path")
+    parser.add_argument('--train', type=str, default='train.dat', help="train file name")
+    parser.add_argument('--full_train', type=str, default='full_train.dat', help="full train file name")
     parser.add_argument('--max_epoch', type=int, default=100, help="max number of epochs")
     parser.add_argument('--k', type=int, default=10, help="number of top ranked items")
     parser.add_argument('--conv_thresh', type=float, default=0.0001, help="threshold diff for convergence")
@@ -21,11 +23,10 @@ def parse_args():
     return parser.parse_args()
 
 
-def full_train(cnfg, epochs, save_path):
-    cnfg['valid'] = False
+def full_train(cnfg, epochs, args):
     cnfg['max_epoch'] = int(epochs)
-    cnfg['save_dir'] = save_path
-    _perf, _early_stop_epoch = train_evaluate(cnfg)
+    cnfg['train'] = args.full_train
+    train(cnfg)
 
 
 def main():
@@ -46,13 +47,15 @@ def main():
             {"name": "cuda", "type": "fixed", "value": args.cuda},
             {"name": "data_dir", "type": "fixed", "value_type": "str", "value": args.data_dir},
             {"name": "save_dir", "type": "fixed", "value_type": "str", "value": args.save_dir},
+            {"name": "train", "type": "fixed", "value_type": "str", "value": args.train}
         ],
         evaluation_function=train_evaluate,
         minimize=False,
         objective_name='0.5*hr_k + 0.5*mrr_k',
         total_trials=args.trials
     )
-    # full_train(best_parameters, values[0]['early_stop_epoch'], args.save_dir)
+
+    full_train(best_parameters, values[0]['early_stop_epoch'], args)
 
 
 if __name__ == '__main__':
