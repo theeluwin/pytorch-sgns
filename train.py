@@ -147,11 +147,11 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
 
         ax.plot(range(len(train_losses)), train_losses, label="train_loss")
         ax.plot(range(len(valid_accs)), valid_accs, label="valid_acc")
-        ax.xlabel('epochs')
+        ax.set_xlabel('epochs')
 
         ax.set_ylabel(r'train_loss')
         secaxx = ax.secondary_xaxis('top')
-        secaxx.set_xlabel('valid_acc')
+        secaxx.set_ylabel('valid_acc')
 
         plt.title('Train loss - Valid accuracy')
         # show a legend on the plot
