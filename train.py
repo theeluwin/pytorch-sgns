@@ -95,7 +95,7 @@ def train(cnfg):
     optim = Adagrad(sgns.parameters(), lr=cnfg['lr'])
 
     train_loader = train_to_dl(cnfg['mini_batch'],
-                               pathlib.Path(cnfg['data_dir'], 'train.dat'))
+                               pathlib.Path(cnfg['data_dir'], cnfg['train']))
     for epoch in range(1, cnfg['max_epoch'] + 1):
         _train_loss = run_epoch(train_loader, epoch, sgns, optim)
 
@@ -122,7 +122,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     optim = Adagrad(sgns.parameters(), lr=cnfg['lr'])
 
     train_loader = train_to_dl(cnfg['mini_batch'],
-                               pathlib.Path(cnfg['data_dir'], 'train.dat'))
+                               pathlib.Path(cnfg['data_dir'], cnfg['train']))
 
     best_epoch = cnfg['max_epoch'] + 1
     valid_accs = [-np.inf]
