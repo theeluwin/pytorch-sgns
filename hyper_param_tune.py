@@ -45,7 +45,6 @@ def main():
             {"name": "hrk_weight", "type": "fixed", "value_type": "float", "value": args.hrk_weight},
             {"name": "cuda", "type": "fixed", "value": args.cuda},
             {"name": "data_dir", "type": "fixed", "value_type": "str", "value": args.data_dir},
-            {"name": "valid", "type": "fixed", "value_type": "bool", "value": True}
 
         ],
         evaluation_function=train_evaluate,
