@@ -121,7 +121,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
                                pathlib.Path(cnfg['data_dir'], 'train.dat'))
 
     early_stop_epoch = cnfg['max_epoch'] + 1
-    valid_accs = []
+    valid_accs = [-np.inf]
     train_losses = []
     patience_count = 0
     best_model = None
