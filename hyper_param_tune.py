@@ -9,7 +9,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', type=str, default='sgns', help="model name")
     parser.add_argument('--data_dir', type=str, default='./data/', help="data directory path")
-    parser.add_argument('--save_dir', type=str, default='./pts/', help="model directory path")
+    parser.add_argument('--save_dir', type=str, default='./output/', help="model directory path")
     parser.add_argument('--max_epoch', type=int, default=100, help="max number of epochs")
     parser.add_argument('--k', type=int, default=10, help="number of top ranked items")
     parser.add_argument('--conv_thresh', type=float, default=0.0001, help="threshold diff for convergence")
@@ -45,7 +45,7 @@ def main():
             {"name": "hrk_weight", "type": "fixed", "value_type": "float", "value": args.hrk_weight},
             {"name": "cuda", "type": "fixed", "value": args.cuda},
             {"name": "data_dir", "type": "fixed", "value_type": "str", "value": args.data_dir},
-
+            {"name": "save_dir", "type": "fixed", "value_type": "str", "value": args.save_dir},
         ],
         evaluation_function=train_evaluate,
         minimize=False,
