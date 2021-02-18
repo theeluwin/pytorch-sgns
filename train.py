@@ -73,6 +73,14 @@ def configure_weights(cnfg, idx2item):
     return weights
 
 
+def save_model(cnfg, model):
+    ivectors = model.ivectors.weight.data.cpu().numpy()
+    ovectors = model.ovectors.weight.data.cpu().numpy()
+    pickle.dump(ivectors, open(pathlib.Path(cnfg['save_dir'], 'idx2ivec.dat'), 'wb'))
+    pickle.dump(ovectors, open(pathlib.Path(cnfg['save_dir'], 'idx2ovec.dat'), 'wb'))
+    t.save(model, pathlib.Path(cnfg['save_dir'], 'best_model.pt'))
+
+
 def train(cnfg):
     idx2item = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
 
@@ -91,11 +99,7 @@ def train(cnfg):
     for epoch in range(1, cnfg['max_epoch'] + 1):
         _train_loss = run_epoch(train_loader, epoch, sgns, optim)
 
-    ivectors = model.ivectors.weight.data.cpu().numpy()
-    ovectors = model.ovectors.weight.data.cpu().numpy()
-    pickle.dump(ivectors, open(pathlib.Path(cnfg['save_dir'], 'idx2ivec.dat'), 'wb'))
-    pickle.dump(ovectors, open(pathlib.Path(cnfg['save_dir'], 'idx2ovec.dat'), 'wb'))
-    t.save(sgns.state_dict(), pathlib.Path(cnfg['save_dir'], 'sgns.pt'))
+    save_model(cnfg, model)
 
 
 def evaluate(model, cnfg, user_lsts, eval_set):
@@ -120,11 +124,11 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     train_loader = train_to_dl(cnfg['mini_batch'],
                                pathlib.Path(cnfg['data_dir'], 'train.dat'))
 
-    early_stop_epoch = cnfg['max_epoch'] + 1
+    best_epoch = cnfg['max_epoch'] + 1
     valid_accs = [-np.inf]
+    best_valid_acc = -np.inf
     train_losses = []
     patience_count = 0
-    best_model = None
 
     for epoch in range(1, cnfg['max_epoch'] + 1):
         train_loss = run_epoch(train_loader, epoch, sgns, optim)
@@ -132,14 +136,20 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
         valid_acc = evaluate(model, cnfg, user_lsts, eval_set)
         print(f'valid acc:{valid_acc}')
 
-        patience_count += int(valid_acc - valid_accs[-1] < cnfg['conv_thresh'])
-        if patience_count == cnfg['patience']:
-            early_stop_epoch = epoch
-            print(f"Early stop at epoch:{epoch}")
-            break
+        diff_acc = valid_acc - valid_accs[-1]
+        if diff_acc > cnfg['conv_thresh']:
+            patience_count = 0
+            if valid_acc > best_valid_acc:
+                best_valid_acc = valid_acc
+                best_epoch = epoch
+                save_model(cnfg, model)
 
-        if valid_acc > valid_accs[-1]:
-            best_model = model
+        else:
+            patience_count += 1
+            if patience_count == cnfg['patience']:
+                print(f"Early stopping")
+                break
+
         valid_accs.append(valid_acc)
 
     if plot:
@@ -158,7 +168,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
         plt.legend()
         fig.savefig(f'plot_{str(cnfg["lr"])}.png')
 
-    return best_model, early_stop_epoch
+    return best_epoch
 
 
 def train_evaluate(cnfg):
@@ -166,8 +176,10 @@ def train_evaluate(cnfg):
                             pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
                             pathlib.Path(cnfg['data_dir'], 'train_corpus.txt'))
     eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
-    best_model, early_stop_epoch = train_early_stop(cnfg, eval_set, user_lsts, plot=True)
+    best_epoch = train_early_stop(cnfg, eval_set, user_lsts, plot=True)
+
+    best_model = t.load(pathlib.Path(cnfg['save_dir'], 'best_model.pt'))
 
     acc = evaluate(best_model, cnfg, user_lsts, eval_set)
-    return {'0.5*hr_k + 0.5*mrr_k': (acc, 0.0), 'early_stop_epoch': (early_stop_epoch, 0.0)}
+    return {'0.5*hr_k + 0.5*mrr_k': (acc, 0.0), 'early_stop_epoch': (best_epoch, 0.0)}
 
