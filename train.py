@@ -156,7 +156,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
         plt.title('Train loss - Valid accuracy')
         # show a legend on the plot
         plt.legend()
-        fig.savefig(f'plot_{str(cnfg["lr"])}')
+        fig.savefig(f'plot_{str(cnfg["lr"])}.png')
 
     return best_model, early_stop_epoch
 
