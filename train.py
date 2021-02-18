@@ -42,13 +42,14 @@ def run_epoch(train_dl, epoch, sgns, optim):
 
     for iitem, oitems in pbar:
         loss = sgns(iitem, oitems)
-        train_losses.append(loss)
+        train_losses.append(loss.item())
         optim.zero_grad()
         loss.backward()
         optim.step()
         pbar.set_postfix(train_loss=loss.item())
 
-    print(f'train_loss: {np.average(train_losses)}')
+    train_loss = np.array(train_losses).mean()
+    print(f'train_loss: {train_loss}')
 
 
 def train_to_dl(mini_batch_size, train_path):
@@ -56,9 +57,7 @@ def train_to_dl(mini_batch_size, train_path):
     return DataLoader(dataset, batch_size=mini_batch_size, shuffle=True)
 
 
-def train_evaluate(cnfg):
-    print(cnfg)
-    idx2item = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
+def configure_weights(cnfg, idx2item):
     ic = pickle.load(pathlib.Path(cnfg['data_dir'], 'ic.dat').open('rb'))
 
     ifr = np.array([ic[item] for item in idx2item])
@@ -67,11 +66,18 @@ def train_evaluate(cnfg):
     assert (ifr > 0).all(), 'Items with invalid count appear.'
     istt = 1 - np.sqrt(cnfg['ss_t'] / ifr)
     istt = np.clip(istt, 0, 1)
-
-    vocab_size = len(idx2item)
     weights = istt if cnfg['weights'] else None
-    model = Item2Vec(vocab_size=vocab_size, embedding_size=cnfg['e_dim'])
+    return weights
 
+
+def train_evaluate(cnfg):
+    print(cnfg)
+    idx2item = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
+
+    weights = configure_weights(cnfg, idx2item)
+    vocab_size = len(idx2item)
+
+    model = Item2Vec(vocab_size=vocab_size, embedding_size=cnfg['e_dim'])
     sgns = SGNS(embedding=model, vocab_size=vocab_size, n_negs=cnfg['n_negs'], weights=weights)
     if cnfg['cuda']:
         sgns = sgns.cuda()
@@ -115,7 +121,6 @@ def train_evaluate(cnfg):
             if perf_diff < cnfg['conv_thresh']:
                 early_stop_epoch = epoch
                 print(f"Early stop at epoch:{epoch}")
-                print(f"HR at {cnfg['k']}:{e_hr_k}, MRR at {cnfg['k']}:{e_mrr_k}")
                 break
 
             last_epoch_perf = perf
