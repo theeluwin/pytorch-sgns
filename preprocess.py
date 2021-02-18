@@ -10,7 +10,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, default='./data/', help="data directory path")
     parser.add_argument('--vocab', type=str, default='./data/corpus.txt', help="corpus path for building vocab")
-    parser.add_argument('--corpus', type=str, default='./data/train_corpus.txt', help="corpus path")
+    parser.add_argument('--full_corpus', type=str, default='./data/corpus.txt', help="corpus path")
+    parser.add_argument('--train_corpus', type=str, default='./data/train_corpus.txt', help="train corpus path")
+    parser.add_argument('--full_train_file', type=str, default='./data/full_train.dat', help="full train file name")
+    parser.add_argument('--train_file', type=str, default='./data/train.dat', help="train file name")
     parser.add_argument('--unk', type=str, default='<UNK>', help="UNK token")
     parser.add_argument('--window', type=int, default=5, help="window size")
     parser.add_argument('--max_vocab', type=int, default=20000, help="maximum number of vocab")
@@ -55,7 +58,7 @@ class Preprocess(object):
         pickle.dump(self.item2idx, open(os.path.join(self.data_dir, 'item2idx.dat'), 'wb'))
         print("build done")
 
-    def convert(self, filepath):
+    def convert(self, filepath, savepath):
         print("converting corpus...")
         step = 0
         data = []
@@ -78,7 +81,7 @@ class Preprocess(object):
                     data.append((self.item2idx[iitem], [self.item2idx[oitem] for oitem in oitems]))
                     i += 1
         print("")
-        pickle.dump(data, open(os.path.join(self.data_dir, 'train.dat'), 'wb'))
+        pickle.dump(data, open(savepath, 'wb'))
         print("conversion done")
 
 
@@ -86,7 +89,8 @@ def main():
     args = parse_args()
     preprocess = Preprocess(window=args.window, unk=args.unk, data_dir=args.data_dir)
     preprocess.build(args.vocab, max_vocab=args.max_vocab)
-    preprocess.convert(args.corpus)
+    preprocess.convert(args.full_corpus, args.full_train_file)
+    preprocess.convert(args.train_corpus, args.train_file)
 
 
 if __name__ == '__main__':
