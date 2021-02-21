@@ -1,37 +1,66 @@
-import pandas as pd
 import random
-from config import DATA_FPATH, TRAIN_PATH, VALID_PATH, DATA_COLS, POS_THRESH
+import argparse
+
+import pandas as pd
+
+DATA_COLS = ['user_id', 'item_id', 'rating', 'timestamp']
 
 
-def filter_group(group):
-    ret_group = group[group['rating'] >= POS_THRESH]
-    if ret_group.empty or ret_group.shape[0] < 2:
-        print(f'user {group.name} rate less than 2 items above 3.5')
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dir', type=str, default='./data/', help="data directory path")
+    parser.add_argument('--source_data', type=str, default='./ml-100k/u.data', help="source data of user-item rankings")
+    parser.add_argument('--full_corpus_path', type=str, default='./data/corpus.txt', help="path to save corpus")
+    parser.add_argument('--train_corpus_path', type=str, default='./data/train_corpus.txt', help="path to save train corpus")
+    parser.add_argument('--valid_path', type=str, default='./data/valid.txt', help="path to save validation")
+    parser.add_argument('--pos_thresh', type=float, default=3.5, help="rank threshold to assign for positive items")
+    parser.add_argument('--min_items', type=int, default=2, help="min number of positive items needed to store a user")
+    return parser.parse_args()
+
+
+def filter_group(group, pos_thresh, min_items):
+    ret_group = group[group['rating'] >= pos_thresh]
+    if ret_group.empty or ret_group.shape[0] < min_items:
+        print(f'user {group.name} ranked less than {min_items} items above {pos_thresh}')
         return []
     else:
         return ret_group['item_id'].tolist()
 
 
-def split_train_valid(lsts):
-    with open(VALID_PATH, 'a') as valid_file, open(TRAIN_PATH, 'a') as train_file:
+def split_train_valid(lsts, corpus_path, train_corpus_path, valid_path):
+    with open(train_corpus_path, 'a') as corpus_train_file, open(corpus_path, 'a') as corpus_full_file, \
+            open(valid_path, 'a') as valid_file:
         valid_file.write('user_id,item_id\n')
-        u = 1
-        for u_lst in lsts:
+        for u in range(lsts.shape[0]):
+            u_lst = lsts[u]
             if len(u_lst):
                 item = random.choice(u_lst)
                 valid_file.write(str(u) + ',' + str(item) + '\n')
+                corpus_full_file.write(' '.join([str(i) for i in u_lst]) + '\n')
                 u_lst.remove(item)
-                out = ' '.join([str(i) for i in u_lst])
-                train_file.write(out + '\n')
+                corpus_train_file.write(' '.join([str(i) for i in u_lst]) + '\n')
             else:
-                train_file.write('' + '\n')
-            u += 1
+                corpus_full_file.write('' + '\n')
+                corpus_train_file.write('' + '\n')
+
+
+def read_data(path, data_cols):
+    data = pd.read_csv(path, delimiter='\t', names=data_cols)
+    data[['user_id', 'item_id']] = data[['user_id', 'item_id']].apply(lambda col: col-1)
+    return data
+
+
+def main():
+    args = parse_args()
+    data = read_data(args.source_data, DATA_COLS)
+    users2items = data.groupby('user_id').apply(lambda group: filter_group(group, args.pos_thresh, args.min_items))
+    print(f'number of users: {len(users2items)}, number of items: '
+          f'{len(set([items for item in users2items.tolist() for items in item]))}')
+    split_train_valid(users2items, args.full_corpus_path, args.train_corpus_path, args.valid_path)
 
 
 if __name__ == '__main__':
-    data = pd.read_csv(DATA_FPATH, delimiter='\t', names=DATA_COLS)
-    users2items = data.groupby('user_id').apply(lambda group: filter_group(group))
-    split_train_valid(users2items)
+    main()
 
 
 

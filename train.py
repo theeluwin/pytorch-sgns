@@ -1,32 +1,31 @@
 # -*- coding: utf-8 -*-
 
-import os
+import pathlib
 import pickle
 import random
-import argparse
-import torch as t
+
 import numpy as np
 import pandas as pd
-
-from tqdm import tqdm
-from torch.optim import Adam
+import torch as t
+from torch.optim import Adagrad
 from torch.utils.data import Dataset, DataLoader
-from torch.utils.data.sampler import SubsetRandomSampler
-from model import Word2Vec, SGNS
+from tqdm import tqdm
 
 from evaluation import users2items, hr_k, mrr_k
-from config import DATA_DIR, VALID_PATH, TRAIN_PATH
+from model import Item2Vec, SGNS
+
+import matplotlib.pyplot as plt
 
 
 class PermutedSubsampledCorpus(Dataset):
 
     def __init__(self, datapath, ws=None):
-        data = pickle.load(open(datapath, 'rb'))
+        data = pickle.load(datapath.open('rb'))
         if ws is not None:
             self.data = []
-            for iword, owords in data:
-                if random.random() > ws[iword]:
-                    self.data.append((iword, owords))
+            for iitem, oitems in data:
+                if random.random() > ws[iitem]:
+                    self.data.append((iitem, oitems))
         else:
             self.data = data
 
@@ -34,119 +33,153 @@ class PermutedSubsampledCorpus(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        iword, owords = self.data[idx]
-        return iword, np.array(owords)
-
-
-def train(args):
-    idx2word = pickle.load(open(os.path.join(args.data_dir, 'idx2word.dat'), 'rb'))
-    wc = pickle.load(open(os.path.join(args.data_dir, 'wc.dat'), 'rb'))
-    wf = np.array([wc[word] for word in idx2word])
-    wf = wf / wf.sum()
-    ws = 1 - np.sqrt(args.ss_t / wf)
-    ws = np.clip(ws, 0, 1)
-    vocab_size = len(idx2word)
-    weights = ws if args.weights else None
-    if not os.path.isdir(args.save_dir):
-        os.mkdir(args.save_dir)
-    model = Word2Vec(vocab_size=vocab_size, embedding_size=args.e_dim)
-    modelpath = os.path.join(args.save_dir, '{}.pt'.format(args.name))
-    sgns = SGNS(embedding=model, vocab_size=vocab_size, n_negs=args.n_negs, weights=weights)
-    if os.path.isfile(modelpath) and args.conti:
-        sgns.load_state_dict(t.load(modelpath))
-    if args.cuda:
-        sgns = sgns.cuda()
-    optim = Adam(sgns.parameters())
-    optimpath = os.path.join(args.save_dir, '{}.optim.pt'.format(args.name))
-    if os.path.isfile(optimpath) and args.conti:
-        optim.load_state_dict(t.load(optimpath))
-    for epoch in range(1, args.epoch + 1):
-        dataset = PermutedSubsampledCorpus(os.path.join(args.data_dir, 'train.dat'))
-        dataloader = DataLoader(dataset, batch_size=args.mb, shuffle=True)
-        total_batches = int(np.ceil(len(dataset) / args.mb))
-        pbar = tqdm(dataloader)
-        pbar.set_description("[Epoch {}]".format(epoch))
-        for iword, owords in pbar:
-            loss = sgns(iword, owords)
-            optim.zero_grad()
-            loss.backward()
-            optim.step()
-            pbar.set_postfix(loss=loss.item())
-    idx2vec = model.ivectors.weight.data.cpu().numpy()
-    pickle.dump(idx2vec, open(os.path.join(args.data_dir, 'idx2vec.dat'), 'wb'))
-    t.save(sgns.state_dict(), os.path.join(args.save_dir, '{}.pt'.format(args.name)))
-    t.save(optim.state_dict(), os.path.join(args.save_dir, '{}.optim.pt'.format(args.name)))
+        iitem, oitems = self.data[idx]
+        return iitem, np.array(oitems)
 
 
 def run_epoch(train_dl, epoch, sgns, optim):
     pbar = tqdm(train_dl)
     pbar.set_description("[Epoch {}]".format(epoch))
-    for iword, owords in pbar:
-        loss = sgns(iword, owords)
+    train_losses = []
+
+    for iitem, oitems in pbar:
+        loss = sgns(iitem, oitems)
+        train_losses.append(loss.item())
         optim.zero_grad()
         loss.backward()
         optim.step()
         pbar.set_postfix(train_loss=loss.item())
 
-
-def evaluate(valid_dl, model):
-    loss_lst = []
-    pbar = tqdm(valid_dl)
-    for iword, owords in pbar:
-        loss = model(iword, owords)
-        loss_lst.append(loss)
-
-    return np.array(loss_lst).mean()
+    train_loss = np.array(train_losses).mean()
+    print(f'train_loss: {train_loss}')
+    return train_loss
 
 
-def train_to_dl(mini_batch_size):
-    dataset = PermutedSubsampledCorpus(TRAIN_PATH)
-    dataloader = DataLoader(dataset, batch_size=mini_batch_size, shuffle=True)
-    total_batches = int(np.ceil(len(dataset) / mini_batch_size))
-    print('total number of batches', total_batches)
-    print('size of dataset', len(dataset))
-    print('batches size with remain', len(dataset) / mini_batch_size)
-    return dataloader
+def train_to_dl(mini_batch_size, train_path):
+    dataset = PermutedSubsampledCorpus(train_path)
+    return DataLoader(dataset, batch_size=mini_batch_size, shuffle=True)
 
 
-def train_evaluate(cnfg):
-    idx2word = pickle.load(open(os.path.join(DATA_DIR, 'idx2word.dat'), 'rb'))
-    wc = pickle.load(open(os.path.join(DATA_DIR, 'wc.dat'), 'rb'))
-    wf = np.array([wc[word] for word in idx2word])
-    wf = wf / wf.sum()
-    ws = 1 - np.sqrt(cnfg['ss_t'] / wf)
-    ws = np.clip(ws, 0, 1)
-    vocab_size = len(idx2word)
-    weights = ws if cnfg['weights'] else None
+def configure_weights(cnfg, idx2item):
+    ic = pickle.load(pathlib.Path(cnfg['data_dir'], 'ic.dat').open('rb'))
 
-    model = Word2Vec(vocab_size=vocab_size, embedding_size=cnfg['e_dim'])
+    ifr = np.array([ic[item] for item in idx2item])
+    ifr = ifr / ifr.sum()
+
+    assert (ifr > 0).all(), 'Items with invalid count appear.'
+    istt = 1 - np.sqrt(cnfg['ss_t'] / ifr)
+    istt = np.clip(istt, 0, 1)
+    weights = istt if cnfg['weights'] else None
+    return weights
+
+
+def save_model(cnfg, model):
+    ivectors = model.ivectors.weight.data.cpu().numpy()
+    ovectors = model.ovectors.weight.data.cpu().numpy()
+    pickle.dump(ivectors, open(pathlib.Path(cnfg['save_dir'], 'idx2ivec.dat'), 'wb'))
+    pickle.dump(ovectors, open(pathlib.Path(cnfg['save_dir'], 'idx2ovec.dat'), 'wb'))
+    t.save(model, pathlib.Path(cnfg['save_dir'], 'best_model.pt'))
+
+
+def train(cnfg):
+    idx2item = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
+
+    weights = configure_weights(cnfg, idx2item)
+    vocab_size = len(idx2item)
+
+    model = Item2Vec(vocab_size=vocab_size, embedding_size=cnfg['e_dim'])
     sgns = SGNS(embedding=model, vocab_size=vocab_size, n_negs=cnfg['n_negs'], weights=weights)
-
     if cnfg['cuda']:
         sgns = sgns.cuda()
 
-    optim = Adam(sgns.parameters(), lr=cnfg['lr'])
+    optim = Adagrad(sgns.parameters(), lr=cnfg['lr'])
 
-    train_loader = train_to_dl(cnfg['mini_batch'])
-    user_lsts = users2items()
-    eval_set = pd.read_csv(VALID_PATH)
-
-    last_epoch_perf = -np.inf
+    train_loader = train_to_dl(cnfg['mini_batch'],
+                               pathlib.Path(cnfg['data_dir'], cnfg['train']))
     for epoch in range(1, cnfg['max_epoch'] + 1):
-        run_epoch(train_loader, epoch, sgns, optim)
-        e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
-        e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
-        perf = e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
-        perf_diff = perf - last_epoch_perf
-        if perf_diff < cnfg['conv_thresh']:
-            print(f"Early stop at epoch:{epoch}")
-            print(f"HR at {cnfg['k']}:{e_hr_k}, MRR at {cnfg['k']}:{e_mrr_k}")
-            break
+        _train_loss = run_epoch(train_loader, epoch, sgns, optim)
 
-        last_epoch_perf = perf
+    save_model(cnfg, model)
 
-    return last_epoch_perf
 
-#
-# if __name__ == '__main__':
-#     train(parse_args())
+def evaluate(model, cnfg, user_lsts, eval_set):
+    e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
+    e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
+    return e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
+
+
+def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
+    idx2item = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
+
+    weights = configure_weights(cnfg, idx2item)
+    vocab_size = len(idx2item)
+
+    model = Item2Vec(vocab_size=vocab_size, embedding_size=cnfg['e_dim'])
+    sgns = SGNS(embedding=model, vocab_size=vocab_size, n_negs=cnfg['n_negs'], weights=weights)
+    if cnfg['cuda']:
+        sgns = sgns.cuda()
+
+    optim = Adagrad(sgns.parameters(), lr=cnfg['lr'])
+
+    train_loader = train_to_dl(cnfg['mini_batch'],
+                               pathlib.Path(cnfg['data_dir'], cnfg['train']))
+
+    best_epoch = cnfg['max_epoch'] + 1
+    valid_accs = [-np.inf]
+    best_valid_acc = -np.inf
+    train_losses = []
+    patience_count = 0
+
+    for epoch in range(1, cnfg['max_epoch'] + 1):
+        train_loss = run_epoch(train_loader, epoch, sgns, optim)
+        train_losses.append(train_loss)
+        valid_acc = evaluate(model, cnfg, user_lsts, eval_set)
+        print(f'valid acc:{valid_acc}')
+
+        diff_acc = valid_acc - valid_accs[-1]
+        if diff_acc > cnfg['conv_thresh']:
+            patience_count = 0
+            if valid_acc > best_valid_acc:
+                best_valid_acc = valid_acc
+                best_epoch = epoch
+                save_model(cnfg, model)
+
+        else:
+            patience_count += 1
+            if patience_count == cnfg['patience']:
+                print(f"Early stopping")
+                break
+
+        valid_accs.append(valid_acc)
+
+    if plot:
+        fig, ax = plt.subplots(constrained_layout=True)
+
+        ax.plot(range(len(train_losses)), train_losses, label="train_loss")
+        ax.plot(range(len(valid_accs)), valid_accs, label="valid_acc")
+        ax.set_xlabel('epochs')
+
+        ax.set_ylabel(r'train_loss')
+        secaxx = ax.secondary_xaxis('top')
+        secaxx.set_ylabel('valid_acc')
+
+        plt.title('Train loss - Valid accuracy')
+        # show a legend on the plot
+        plt.legend()
+        fig.savefig(f'plot_{str(cnfg["lr"])}.png')
+
+    return best_epoch
+
+
+def train_evaluate(cnfg):
+    user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'item2idx.dat'),
+                            pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
+                            pathlib.Path(cnfg['data_dir'], 'train_corpus.txt'))
+    eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
+    best_epoch = train_early_stop(cnfg, eval_set, user_lsts, plot=True)
+
+    best_model = t.load(pathlib.Path(cnfg['save_dir'], 'best_model.pt'))
+
+    acc = evaluate(best_model, cnfg, user_lsts, eval_set)
+    return {'0.5*hr_k + 0.5*mrr_k': (acc, 0.0), 'early_stop_epoch': (best_epoch, 0.0)}
+
