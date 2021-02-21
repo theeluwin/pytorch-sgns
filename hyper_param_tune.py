@@ -16,6 +16,7 @@ def parse_args():
     parser.add_argument('--k', type=int, default=10, help="number of top ranked items")
     parser.add_argument('--conv_thresh', type=float, default=0.0001, help="threshold diff for convergence")
     parser.add_argument('--patience', type=float, default=3, help="epochs to wait until early stopping")
+    parser.add_argument('--unk', type=str, default='<UNK>', help="UNK token")
     parser.add_argument('--hrk_weight', type=float, default=0.5, help="weight to put on hrk metric value")
     parser.add_argument('--trials', type=int, default=10, help="number of trials ")
     parser.add_argument('--cuda', action='store_true', help="use CUDA")
@@ -44,6 +45,7 @@ def main():
             {"name": "patience", "type": "fixed", "value_type": "int", "value": args.patience},
             {"name": "conv_thresh", "type": "fixed", "value_type": "float", "value": args.conv_thresh},
             {"name": "hrk_weight", "type": "fixed", "value_type": "float", "value": args.hrk_weight},
+            {"name": "unk", "type": "fixed", "value_type": "float", "value": args.unk},
             {"name": "cuda", "type": "fixed", "value": args.cuda},
             {"name": "data_dir", "type": "fixed", "value_type": "str", "value": args.data_dir},
             {"name": "save_dir", "type": "fixed", "value_type": "str", "value": args.save_dir},
