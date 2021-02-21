@@ -45,7 +45,7 @@ def main():
             {"name": "patience", "type": "fixed", "value_type": "int", "value": args.patience},
             {"name": "conv_thresh", "type": "fixed", "value_type": "float", "value": args.conv_thresh},
             {"name": "hrk_weight", "type": "fixed", "value_type": "float", "value": args.hrk_weight},
-            {"name": "unk", "type": "fixed", "value_type": "float", "value": args.unk},
+            {"name": "unk", "type": "fixed", "value_type": "str", "value": args.unk},
             {"name": "cuda", "type": "fixed", "value": args.cuda},
             {"name": "data_dir", "type": "fixed", "value_type": "str", "value": args.data_dir},
             {"name": "save_dir", "type": "fixed", "value_type": "str", "value": args.save_dir},
