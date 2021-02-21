@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('--max_epoch', type=int, default=100, help="max number of epochs")
     parser.add_argument('--k', type=int, default=10, help="number of top ranked items")
     parser.add_argument('--conv_thresh', type=float, default=0.0001, help="threshold diff for convergence")
-    parser.add_argument('--patience', type=float, default=5, help="epochs to wait until early stopping")
+    parser.add_argument('--patience', type=float, default=3, help="epochs to wait until early stopping")
     parser.add_argument('--hrk_weight', type=float, default=0.5, help="weight to put on hrk metric value")
     parser.add_argument('--trials', type=int, default=10, help="number of trials ")
     parser.add_argument('--cuda', action='store_true', help="use CUDA")
