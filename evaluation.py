@@ -5,19 +5,16 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-UNK = '<UNK>'
-
-
-def _extract_item_ids(corpus_line, vocab, item2idx):
+def _extract_item_ids(corpus_line, vocab, item2idx, unk_token):
     return \
         [
-            item2idx[item] if item in vocab else item2idx[UNK]
+            item2idx[item] if item in vocab else item2idx[unk_token]
             for item
             in corpus_line.split()
         ]
 
 
-def users2items(item2index_path, vocab_path, corpus_path):
+def users2items(item2index_path, vocab_path, corpus_path, unk_token):
     users = []
     item2idx = pickle.load(open(item2index_path, 'rb'))
     vocab = pickle.load(open(vocab_path, 'rb'))
@@ -29,7 +26,7 @@ def users2items(item2index_path, vocab_path, corpus_path):
                 users.append([])
                 continue
 
-            users.append(_extract_item_ids(corpus_line=corpus_line, vocab=vocab, item2idx=item2idx))
+            users.append(_extract_item_ids(corpus_line=corpus_line, vocab=vocab, item2idx=item2idx, unk_token=unk_token))
     return users
 
 

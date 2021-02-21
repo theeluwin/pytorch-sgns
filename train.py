@@ -174,7 +174,8 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
 def train_evaluate(cnfg):
     user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'item2idx.dat'),
                             pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
-                            pathlib.Path(cnfg['data_dir'], 'train_corpus.txt'))
+                            pathlib.Path(cnfg['data_dir'], 'train_corpus.txt'),
+                            cnfg['unk'])
     eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
     best_epoch = train_early_stop(cnfg, eval_set, user_lsts, plot=True)
 
