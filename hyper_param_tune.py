@@ -13,7 +13,7 @@ def parse_args():
     parser.add_argument('--train', type=str, default='train.dat', help="train file name")
     parser.add_argument('--full_train', type=str, default='full_train.dat', help="full train file name")
     parser.add_argument('--max_epoch', type=int, default=100, help="max number of epochs")
-    parser.add_argument('--k', type=int, default=10, help="number of top ranked items")
+    parser.add_argument('--k', type=int, default=20, help="number of top ranked items")
     parser.add_argument('--conv_thresh', type=float, default=0.0001, help="threshold diff for convergence")
     parser.add_argument('--patience', type=float, default=3, help="epochs to wait until early stopping")
     parser.add_argument('--unk', type=str, default='<UNK>', help="UNK token")
@@ -34,12 +34,12 @@ def main():
     args = parse_args()
     best_parameters, values, _experiment, _cur_model = optimize(
         parameters=[
-            {"name": "lr", "type": "range", "value_type": "float", "bounds": [1e-3, 1e-1], "log_scale": True},
-            {"name": "ss_t", "type": "range", "value_type": "float", "bounds": [1e-5, 3e-3], "log_scale": True},
-            {"name": "e_dim", "type": "choice", "value_type": "int", "values": [80, 100, 150, 200, 220, 250]},
+            {"name": "lr", "type": "range", "value_type": "float", "bounds": [1e-3, 1e-1]},
+            {"name": "ss_t", "type": "range", "value_type": "float", "bounds": [1e-5, 3e-3]},
+            {"name": "e_dim", "type": "choice", "value_type": "int", "values": [12, 17, 20, 25, 30]},
             {"name": "n_negs", "type": "choice", "value_type": "int", "values": [5, 7, 10, 15, 50]},
-            {"name": "mini_batch", "type": "choice", "value_type": "int", "values": [5, 8, 16, 36]},
-            {"name": "weights", "type": "choice", "value_type": "bool", "values": [True, False]},
+            {"name": "mini_batch", "type": "choice", "value_type": "int", "values": [20, 25, 36, 50, 100]},
+            {"name": "weights", "type": "choice", "value_type": "bool", "values": [False, False]},
             {"name": "max_epoch", "type": "fixed", "value_type": "int", "value": args.max_epoch},
             {"name": "k", "type": "fixed", "value_type": "int", "value": args.k},
             {"name": "patience", "type": "fixed", "value_type": "int", "value": args.patience},
@@ -53,7 +53,7 @@ def main():
         ],
         evaluation_function=train_evaluate,
         minimize=False,
-        objective_name='0.5*hr_k + 0.5*mrr_k',
+        objective_name='hr_k',
         total_trials=args.trials
     )
 

@@ -104,8 +104,9 @@ def train(cnfg):
 
 def evaluate(model, cnfg, user_lsts, eval_set):
     e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
-    e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
-    return e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
+    # e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
+    # return e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
+    return e_hr_k
 
 
 def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
@@ -160,7 +161,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
         ax.set_xlabel('epochs')
 
         ax.set_ylabel(r'train_loss')
-        secaxy = ax.secondary_yaxis('top')
+        secaxy = ax.secondary_yaxis('right')
         secaxy.set_ylabel('valid_acc')
 
         plt.title('Train loss - Valid accuracy')
@@ -172,6 +173,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
 
 
 def train_evaluate(cnfg):
+    print(cnfg)
     user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'item2idx.dat'),
                             pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
                             pathlib.Path(cnfg['data_dir'], 'train_corpus.txt'),
@@ -182,5 +184,5 @@ def train_evaluate(cnfg):
     best_model = t.load(pathlib.Path(cnfg['save_dir'], 'best_model.pt'))
 
     acc = evaluate(best_model, cnfg, user_lsts, eval_set)
-    return {'0.5*hr_k + 0.5*mrr_k': (acc, 0.0), 'early_stop_epoch': (best_epoch, 0.0)}
+    return {'hr_k': (acc, 0.0), 'early_stop_epoch': (best_epoch, 0.0)}
 
