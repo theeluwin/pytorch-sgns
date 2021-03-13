@@ -9,7 +9,7 @@ DATA_COLS = ['user_id', 'item_id', 'rating', 'timestamp']
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, default='./data/', help="data directory path")
-    parser.add_argument('--source_data', type=str, default='./ml-100k/u.data', help="source data of user-item rankings")
+    parser.add_argument('--source_data', type=str, default='./data/ratings.dat', help="source data of user-item rankings")
     parser.add_argument('--full_corpus_path', type=str, default='./data/corpus.txt', help="path to save corpus")
     parser.add_argument('--train_corpus_path', type=str, default='./data/train_corpus.txt', help="path to save train corpus")
     parser.add_argument('--valid_path', type=str, default='./data/valid.txt', help="path to save validation")
@@ -45,7 +45,7 @@ def split_train_valid(lsts, corpus_path, train_corpus_path, valid_path):
 
 
 def read_data(path, data_cols):
-    data = pd.read_csv(path, delimiter='\t', names=data_cols)
+    data = pd.read_csv(path, delimiter='::', names=data_cols, engine='python')
     data[['user_id', 'item_id']] = data[['user_id', 'item_id']].apply(lambda col: col-1)
     return data
 
