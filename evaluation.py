@@ -31,7 +31,7 @@ def users2items(item2index_path, vocab_path, corpus_path, unk_token):
 
 
 def represent_user(user_items, model):
-    context_vecs = model.ovectors.weight.data.cpu().numpy()
+    context_vecs = model.ivectors.weight.data.cpu().numpy()
     user2vec = context_vecs[user_items, :].mean(axis=0)
     return user2vec
 
@@ -59,7 +59,7 @@ def mrr_k(model, k, users2items, eval_set):
 
 def _calc_item_rank(k, model, u_id, users2items):
     user2vec = represent_user(users2items[u_id], model).reshape(1, -1)
-    user_sim = cosine_similarity(user2vec, model.ivectors.weight.data.cpu().numpy()).squeeze()
+    user_sim = cosine_similarity(user2vec, model.ovectors.weight.data.cpu().numpy()).squeeze()
     top_k_items = user_sim.argsort()[-k:][::-1]
     return top_k_items
 
