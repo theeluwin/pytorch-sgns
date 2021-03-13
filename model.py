@@ -70,10 +70,17 @@ class SGNS(nn.Module):
         else:
             nitems = FT(batch_size, context_size * self.n_negs).uniform_(0, self.vocab_size - 1).long()
         ivectors = self.embedding.forward_i(iitem).unsqueeze(2)
+        # print('ivectors', ivectors.shape)
         ovectors = self.embedding.forward_o(oitems)
+        # print('ovectors', ovectors.shape)
         nvectors = self.embedding.forward_o(nitems).neg()
+        # print('nvectors', nvectors.shape)
+        # print('mult o and i', t.bmm(ovectors, ivectors).shape)
         oloss = t.bmm(ovectors, ivectors).squeeze(dim=-1).sigmoid().log().mean(1)
+        # print('oloss', oloss.shape)
         assert oloss.shape[0] == batch_size, 'oloss vector shape is different than batch size'
         nloss = t.bmm(nvectors, ivectors).squeeze(dim=-1).sigmoid().log().view(-1, context_size, self.n_negs).sum(2).mean(1)
+        # print('mult n and i', t.bmm(nvectors, ivectors).shape)
+        # print('nloss', nloss.shape)
         assert nloss.shape[0] == batch_size, 'nloss vector shape is different than batch size'
         return -(oloss + nloss).mean()
