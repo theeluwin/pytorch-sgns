@@ -37,12 +37,14 @@ class Item2Vec(Bundler):
         return self.forward_i(data)
 
     def forward_i(self, data):
-        v = LT(data)
+        # v = LT(data)
+        v = data.long()
         v = v.cuda() if self.ivectors.weight.is_cuda else v
         return self.ivectors(v)
 
     def forward_o(self, data):
-        v = LT(data)
+        # v = LT(data)
+        v = data.long()
         v = v.cuda() if self.ovectors.weight.is_cuda else v
         return self.ovectors(v)
 
