@@ -37,7 +37,7 @@ class PermutedSubsampledCorpus(Dataset):
         return iitem, np.array(oitems)
 
 
-def run_epoch(train_dl, epoch, sgns, optim):
+def run_epoch(train_dl, epoch, sgns, optim, examp):
     pbar = tqdm(train_dl)
     pbar.set_description("[Epoch {}]".format(epoch))
     train_losses = []
@@ -52,6 +52,8 @@ def run_epoch(train_dl, epoch, sgns, optim):
 
     train_loss = np.array(train_losses).mean()
     print(f'train_loss: {train_loss}')
+    examp_loss = loss(examp[0], examp[1])
+    print(f'examp loss:{examp_loss}')
     return train_loss, sgns
 
 
@@ -126,6 +128,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     train_loader = train_to_dl(cnfg['mini_batch'],
                                pathlib.Path(cnfg['data_dir'], cnfg['train']))
 
+    examp = next(iter(train_loader))
     best_epoch = cnfg['max_epoch'] + 1
     valid_accs = [-np.inf]
     best_valid_acc = -np.inf
@@ -133,9 +136,8 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     patience_count = 0
 
     for epoch in range(1, cnfg['max_epoch'] + 1):
-        train_loss, sgns = run_epoch(train_loader, epoch, sgns, optim)
+        train_loss, sgns = run_epoch(train_loader, epoch, sgns, optim, examp)
         train_losses.append(train_loss)
-        # TODO : send sgns instead of the model and reach to embedding.ivectors and embedding.ovectors
         valid_acc = evaluate(model, cnfg, user_lsts, eval_set, item2idx)
         print(f'valid acc:{valid_acc}')
 
@@ -145,7 +147,6 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
             if valid_acc > best_valid_acc:
                 best_valid_acc = valid_acc
                 best_epoch = epoch
-                # TODO: seva sgns and not model ?
                 save_model(cnfg, model)
 
         else:
