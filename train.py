@@ -11,7 +11,7 @@ from torch.optim import Adagrad
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
-from evaluation import users2items, hr_k, mrr_k
+from evaluation import users2itemids, hr_k, mrr_k
 from model import Item2Vec, SGNS
 
 import matplotlib.pyplot as plt
@@ -52,7 +52,7 @@ def run_epoch(train_dl, epoch, sgns, optim):
 
     train_loss = np.array(train_losses).mean()
     print(f'train_loss: {train_loss}')
-    return train_loss
+    return train_loss, sgns
 
 
 def train_to_dl(mini_batch_size, train_path):
@@ -132,8 +132,9 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     patience_count = 0
 
     for epoch in range(1, cnfg['max_epoch'] + 1):
-        train_loss = run_epoch(train_loader, epoch, sgns, optim)
+        train_loss, sgns = run_epoch(train_loader, epoch, sgns, optim)
         train_losses.append(train_loss)
+        # TODO : send sgns instead of the model and reach to embedding.ivectors and embedding.ovectors
         valid_acc = evaluate(model, cnfg, user_lsts, eval_set)
         print(f'valid acc:{valid_acc}')
 
@@ -143,6 +144,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
             if valid_acc > best_valid_acc:
                 best_valid_acc = valid_acc
                 best_epoch = epoch
+                # TODO: seva sgns and not model ?
                 save_model(cnfg, model)
 
         else:
@@ -174,7 +176,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
 
 def train_evaluate(cnfg):
     print(cnfg)
-    user_lsts = users2items(pathlib.Path(cnfg['data_dir'], 'item2idx.dat'),
+    user_lsts = users2itemids(pathlib.Path(cnfg['data_dir'], 'item2idx.dat'),
                             pathlib.Path(cnfg['data_dir'], 'vocab.dat'),
                             pathlib.Path(cnfg['data_dir'], 'train_corpus.txt'),
                             cnfg['unk'])
