@@ -6,6 +6,7 @@ import pickle
 import argparse
 import random
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, default='./data/', help="data directory path")
@@ -26,6 +27,10 @@ class Preprocess(object):
         self.window = window
         self.unk = unk
         self.data_dir = data_dir
+
+    # def skipgram(self, user, i):
+    #     iitem = user[i]
+    #     # TODO: implement with (item_context, window items_target) as many time window consisted in user list.
 
     def skipgram(self, user, i):
         iitem = user[i]
@@ -55,6 +60,7 @@ class Preprocess(object):
                 for item in user:
                     self.wc[item] = self.wc.get(item, 0) + 1
         print("")
+        # sorted list of items in a descent order of their frequency
         self.idx2item = [self.unk] + sorted(self.wc, key=self.wc.get, reverse=True)[:max_vocab - 1]
         self.item2idx = {self.idx2item[idx]: idx for idx, _ in enumerate(self.idx2item)}
         self.vocab = set([item for item in self.item2idx])
@@ -84,7 +90,7 @@ class Preprocess(object):
                         user.append(self.unk)
                 for i in range(len(user)):
                     # iitem, oitems = self.skipgram(user, i)
-                    iitem, oitems = self.skipgram_no_order(user, i)
+                    iitem, oitems = self.skipgram(user, i)
                     data.append((self.item2idx[iitem], [self.item2idx[oitem] for oitem in oitems]))
                     i += 1
         print("")
