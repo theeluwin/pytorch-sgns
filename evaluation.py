@@ -39,7 +39,7 @@ def represent_user(user_itemids, model):
 def hr_k(model, k, users2itemids, eval_set, item2idx, unk):
     in_top_k = 0
     for u_id, target_item in eval_set[['user_id', 'item_id']].values:
-        target_item_idx = item2idx.get(target_item, unk)
+        target_item_idx = item2idx.get(str(target_item), item2idx[unk])
         top_k_item_idxs = _calc_item_rank(k, model, u_id, users2itemids)
         if target_item_idx in top_k_item_idxs:
             in_top_k += 1
