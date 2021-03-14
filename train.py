@@ -52,7 +52,7 @@ def run_epoch(train_dl, epoch, sgns, optim, examp):
 
     train_loss = np.array(train_losses).mean()
     print(f'train_loss: {train_loss}')
-    examp_loss = loss(examp[0], examp[1])
+    examp_loss = sgns(examp[0], examp[1])
     print(f'examp loss:{examp_loss}')
     return train_loss, sgns
 
