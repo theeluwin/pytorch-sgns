@@ -90,7 +90,7 @@ class Preprocess(object):
                         user.append(self.unk)
                 for i in range(len(user)):
                     # iitem, oitems = self.skipgram(user, i)
-                    iitem, oitems = self.skipgram(user, i)
+                    iitem, oitems = self.skipgram_no_order(user, i)
                     data.append((self.item2idx[iitem], [self.item2idx[oitem] for oitem in oitems]))
                     i += 1
         print("")
