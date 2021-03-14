@@ -102,8 +102,8 @@ def train(cnfg):
     save_model(cnfg, model)
 
 
-def evaluate(model, cnfg, user_lsts, eval_set):
-    e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set)
+def evaluate(model, cnfg, user_lsts, eval_set, item2idx):
+    e_hr_k = hr_k(model, cnfg['k'], user_lsts, eval_set, item2idx, cnfg['unk'])
     # e_mrr_k = mrr_k(model, cnfg['k'], user_lsts, eval_set)
     # return e_hr_k * cnfg['hrk_weight'] + e_mrr_k * (1 - cnfg['hrk_weight'])
     return e_hr_k
@@ -111,6 +111,7 @@ def evaluate(model, cnfg, user_lsts, eval_set):
 
 def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     idx2item = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
+    item2idx = pickle.load(pathlib.Path(cnfg['data_dir'], 'item2idx.dat').open('rb'))
 
     weights = configure_weights(cnfg, idx2item)
     vocab_size = len(idx2item)
@@ -135,7 +136,7 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
         train_loss, sgns = run_epoch(train_loader, epoch, sgns, optim)
         train_losses.append(train_loss)
         # TODO : send sgns instead of the model and reach to embedding.ivectors and embedding.ovectors
-        valid_acc = evaluate(model, cnfg, user_lsts, eval_set)
+        valid_acc = evaluate(model, cnfg, user_lsts, eval_set, item2idx)
         print(f'valid acc:{valid_acc}')
 
         diff_acc = valid_acc - valid_accs[-1]
