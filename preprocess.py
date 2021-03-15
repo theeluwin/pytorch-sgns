@@ -61,8 +61,11 @@ class Preprocess(object):
                     self.wc[item] = self.wc.get(item, 0) + 1
         print("")
         # sorted list of items in a descent order of their frequency
+        self.wc['pad'] = 0
         self.idx2item = [self.unk] + sorted(self.wc, key=self.wc.get, reverse=True)[:max_vocab - 1]
+        # self.idx2item.append('pad')
         self.item2idx = {self.idx2item[idx]: idx for idx, _ in enumerate(self.idx2item)}
+        # self.item2idx['pad'] = len(self.idx2item)
         self.vocab = set([item for item in self.item2idx])
         pickle.dump(self.wc, open(os.path.join(self.data_dir, 'ic.dat'), 'wb'))
         pickle.dump(self.vocab, open(os.path.join(self.data_dir, 'vocab.dat'), 'wb'))
