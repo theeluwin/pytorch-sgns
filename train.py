@@ -37,7 +37,7 @@ class PermutedSubsampledCorpus(Dataset):
         return iitem, np.array(oitems)
 
 
-def run_epoch(train_dl, epoch, sgns, optim, examp):
+def run_epoch(train_dl, epoch, sgns, optim):
     pbar = tqdm(train_dl)
     pbar.set_description("[Epoch {}]".format(epoch))
     train_losses = []
@@ -52,8 +52,6 @@ def run_epoch(train_dl, epoch, sgns, optim, examp):
 
     train_loss = np.array(train_losses).mean()
     print(f'train_loss: {train_loss}')
-    examp_loss = sgns(examp[0], examp[1])
-    print(f'examp loss:{examp_loss}')
     return train_loss, sgns
 
 
@@ -136,7 +134,11 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     patience_count = 0
 
     for epoch in range(1, cnfg['max_epoch'] + 1):
-        train_loss, sgns = run_epoch(train_loader, epoch, sgns, optim, examp)
+        train_loss, sgns = run_epoch(train_loader, epoch, sgns, optim)
+        # log specific training example loss
+        examp_loss = sgns(examp[0], examp[1])
+        print(f'examp loss:{examp_loss}')
+
         train_losses.append(train_loss)
         valid_acc = evaluate(model, cnfg, user_lsts, eval_set, item2idx)
         print(f'valid acc:{valid_acc}')
@@ -183,10 +185,11 @@ def train_evaluate(cnfg):
                             pathlib.Path(cnfg['data_dir'], 'train_corpus.txt'),
                             cnfg['unk'])
     eval_set = pd.read_csv(pathlib.Path(cnfg['data_dir'], 'valid.txt'))
+    item2idx = pickle.load(pathlib.Path(cnfg['data_dir'], 'item2idx.dat').open('rb'))
     best_epoch = train_early_stop(cnfg, eval_set, user_lsts, plot=True)
 
     best_model = t.load(pathlib.Path(cnfg['save_dir'], 'best_model.pt'))
 
-    acc = evaluate(best_model, cnfg, user_lsts, eval_set)
+    acc = evaluate(best_model, cnfg, user_lsts, eval_set, item2idx)
     return {'hr_k': (acc, 0.0), 'early_stop_epoch': (best_epoch, 0.0)}
 
