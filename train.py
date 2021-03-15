@@ -19,8 +19,10 @@ import matplotlib.pyplot as plt
 
 class PermutedSubsampledCorpus(Dataset):
 
-    def __init__(self, datapath, ws=None):
+    def __init__(self, datapath, window_size, pad_idx, ws=None):
         data = pickle.load(datapath.open('rb'))
+        self.window = window_size
+        self.pad_idx = pad_idx
         if ws is not None:
             self.data = []
             for iitem, oitems in data:
@@ -34,7 +36,10 @@ class PermutedSubsampledCorpus(Dataset):
 
     def __getitem__(self, idx):
         iitem, oitems = self.data[idx]
-        return iitem, np.array(oitems)
+        window_min = min(len(oitems), self.window)
+        oitems_samp = random.sample(oitems, window_min)
+        oitems_samp += [self.pad_idx for _ in range(self.window - window_min)]
+        return iitem, np.array(oitems_samp)
 
 
 def run_epoch(train_dl, epoch, sgns, optim):
@@ -55,8 +60,8 @@ def run_epoch(train_dl, epoch, sgns, optim):
     return train_loss, sgns
 
 
-def train_to_dl(mini_batch_size, train_path):
-    dataset = PermutedSubsampledCorpus(train_path)
+def train_to_dl(mini_batch_size, train_path, window, pad_idx):
+    dataset = PermutedSubsampledCorpus(train_path, window, pad_idx)
     return DataLoader(dataset, batch_size=mini_batch_size, shuffle=True)
 
 
@@ -113,6 +118,9 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     idx2item = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
     item2idx = pickle.load(pathlib.Path(cnfg['data_dir'], 'item2idx.dat').open('rb'))
 
+    idx2item.appeng('pad')
+    item2idx['pad'] = len(idx2item)
+
     weights = configure_weights(cnfg, idx2item)
     vocab_size = len(idx2item)
 
@@ -123,10 +131,6 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
 
     optim = Adagrad(sgns.parameters(), lr=cnfg['lr'])
 
-    train_loader = train_to_dl(cnfg['mini_batch'],
-                               pathlib.Path(cnfg['data_dir'], cnfg['train']))
-
-    examp = next(iter(train_loader))
     best_epoch = cnfg['max_epoch'] + 1
     valid_accs = [-np.inf]
     best_valid_acc = -np.inf
@@ -134,10 +138,12 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     patience_count = 0
 
     for epoch in range(1, cnfg['max_epoch'] + 1):
+        train_loader = train_to_dl(cnfg['mini_batch'],
+                                   pathlib.Path(cnfg['data_dir'], cnfg['train']),
+                                   cnfg['window'],
+                                   item2idx['pad'])
         train_loss, sgns = run_epoch(train_loader, epoch, sgns, optim)
         # log specific training example loss
-        examp_loss = sgns(examp[0], examp[1])
-        print(f'examp loss:{examp_loss}')
 
         train_losses.append(train_loss)
         valid_acc = evaluate(model, cnfg, user_lsts, eval_set, item2idx)
