@@ -50,7 +50,8 @@ def main():
             {"name": "cuda", "type": "fixed", "value": args.cuda},
             {"name": "data_dir", "type": "fixed", "value_type": "str", "value": args.data_dir},
             {"name": "save_dir", "type": "fixed", "value_type": "str", "value": args.save_dir},
-            {"name": "train", "type": "fixed", "value_type": "str", "value": args.train}
+            {"name": "train", "type": "fixed", "value_type": "str", "value": args.train},
+            {"name": "window", "type": "fixed", "value_type": "int", "value": args.window}
         ],
         evaluation_function=train_evaluate,
         minimize=False,
