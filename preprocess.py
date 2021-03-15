@@ -28,10 +28,6 @@ class Preprocess(object):
         self.unk = unk
         self.data_dir = data_dir
 
-    # def skipgram(self, user, i):
-    #     iitem = user[i]
-    #     # TODO: implement with (item_context, window items_target) as many time window consisted in user list.
-
     def skipgram(self, user, i):
         iitem = user[i]
         left = user[max(i - self.window, 0): i]
@@ -43,6 +39,10 @@ class Preprocess(object):
         context_size = min(len(user)-1, self.window)
         context = random.sample([_ for _ in user if _ != iitem], context_size)
         return iitem, [self.unk for _ in range(self.window - context_size)] + context
+
+    def skipgram_no_order(self, user, i):
+        iitem = user[i]
+        return iitem, [j for j in user if j != 1]
 
     def build(self, filepath, max_vocab=20000):
         print("building vocab...")
