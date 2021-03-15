@@ -118,9 +118,6 @@ def train_early_stop(cnfg, eval_set, user_lsts, plot=True):
     idx2item = pickle.load(pathlib.Path(cnfg['data_dir'], 'idx2item.dat').open('rb'))
     item2idx = pickle.load(pathlib.Path(cnfg['data_dir'], 'item2idx.dat').open('rb'))
 
-    idx2item.appeng('pad')
-    item2idx['pad'] = len(idx2item)
-
     weights = configure_weights(cnfg, idx2item)
     vocab_size = len(idx2item)
 
