@@ -34,15 +34,15 @@ class Preprocess(object):
         right = user[i + 1: i + 1 + self.window]
         return iitem, [self.unk for _ in range(self.window - len(left))] + left + right + [self.unk for _ in range(self.window - len(right))]
 
-    def skipgram_no_order(self, user, i):
-        iitem = user[i]
-        context_size = min(len(user)-1, self.window)
-        context = random.sample([_ for _ in user if _ != iitem], context_size)
-        return iitem, [self.unk for _ in range(self.window - context_size)] + context
+    # def skipgram_no_order(self, user, i):
+    #     iitem = user[i]
+    #     context_size = min(len(user)-1, self.window)
+    #     context = random.sample([_ for _ in user if _ != iitem], context_size)
+    #     return iitem, [self.unk for _ in range(self.window - context_size)] + context
 
     def skipgram_no_order(self, user, i):
         iitem = user[i]
-        return iitem, [j for j in user if j != 1]
+        return iitem, [user[j] for j in range(len(user)) if j != i]
 
     def build(self, filepath, max_vocab=20000):
         print("building vocab...")
@@ -91,6 +91,9 @@ class Preprocess(object):
                 for i in range(len(user)):
                     # iitem, oitems = self.skipgram(user, i)
                     iitem, oitems = self.skipgram_no_order(user, i)
+                    if not len(oitems):
+                        print('skip context item')
+                        continue
                     data.append((self.item2idx[iitem], [self.item2idx[oitem] for oitem in oitems]))
                     i += 1
         print("")
