@@ -61,7 +61,7 @@ class Preprocess(object):
                     self.wc[item] = self.wc.get(item, 0) + 1
         print("")
         # sorted list of items in a descent order of their frequency
-        self.wc['pad'] = 0
+        self.wc['pad'] = 1
         self.idx2item = [self.unk] + sorted(self.wc, key=self.wc.get, reverse=True)[:max_vocab - 1]
         # self.idx2item.append('pad')
         self.item2idx = {self.idx2item[idx]: idx for idx, _ in enumerate(self.idx2item)}
